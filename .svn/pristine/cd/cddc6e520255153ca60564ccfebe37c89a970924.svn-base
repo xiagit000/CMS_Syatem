@@ -1,0 +1,98 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.service.impl;
+
+import java.io.File;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.boventech.cms.dao.user.UserDao;
+import com.boventech.cms.module.user.User;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.sacwh.dao.NewsDao;
+import com.boventech.sacwh.dao.RevertDao;
+import com.boventech.sacwh.module.News;
+import com.boventech.sacwh.module.Revert;
+import com.boventech.sacwh.service.NewsService;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.util.user.UserRight;
+
+@Service
+@Transactional
+public class NewsServiceImpl implements NewsService {
+
+    private NewsDao newsDao;
+    
+    private UserDao userDao;
+    
+    private RevertDao revertDao;
+    
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    public void setNewsDao(NewsDao newsDao) {
+        this.newsDao = newsDao;
+    }
+
+    public void save(News t) {
+        this.newsDao.save(t);
+    }
+
+    public void delete(News t) {
+        this.newsDao.delete(t);
+    }
+
+    public void update(News t) {
+        this.newsDao.update(t);
+    }
+
+    public News findById(Integer id) {
+        return this.newsDao.findById(id);
+    }
+
+    public List<News> listAll(PageIndex pageIndex) {
+        return this.newsDao.list(pageIndex);
+    }
+
+    public List<User> getNoReverter(Integer newsId) {
+        News news = this.newsDao.findById(newsId);
+        List<User> all = this.userDao.listByRight(UserRight.NORMAL);
+        List<User> reverters = news.getReverters();
+        all.removeAll(reverters);
+        return all;
+    }
+
+    public void deleteByNews(int newsId) {
+        News news = this.newsDao.findById(newsId);
+        List<Revert> reverts = this.revertDao.listAllByNews(null, news);
+        for (Revert revert : reverts) {
+            File file = new File(ActionUtil.getContextRealPath() + revert.getFilepath());
+            if(file.exists())
+                file.delete();
+            this.revertDao.delete(revert);
+        }
+        File file = new File(ActionUtil.getContextRealPath() + news.getFilepath());
+        if(file.exists())
+            file.delete();
+        this.newsDao.delete(news);
+    }
+
+    public void setRevertDao(RevertDao revertDao) {
+        this.revertDao = revertDao;
+    }
+    
+}

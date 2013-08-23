@@ -1,0 +1,78 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+    <%@taglib uri="/struts-tags" prefix="s"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>交易量列表</title>
+</head>
+<body>
+<div class="class_title">
+交易量列表
+</div>
+<table class="list">
+    <thead>
+        <tr class="w300">
+            <th class="number"><s:text name="orderNumber"/></th>
+            <th>公司名称</th>
+            <th>交易量百分比</th>
+            <th>交易量金额</th>
+            <th>交易时间</th>
+            <th>排序值</th>
+            <th class="operation"><s:text name="operation"></s:text></th>
+        </tr>
+    </thead>
+		<tfoot>
+        <tr class="toolbar">
+            <td colspan="7">
+                <div class="row_left"></div>
+                <div class="row_left">
+                   <input class="btn bw2" onclick="go('<s:url value="/admin/deal-amount/new"/>')"
+                    value="<s:text name='add'/>" type="button"/>
+                </div>
+                <s:if test="dealAmounts.size != 0">
+                    <div class="row_right"><s:include value="../../common/page.jsp"></s:include></div>
+                </s:if>
+                <div class="clear"></div>
+            </td>
+        </tr>
+    </tfoot>
+		<tbody>
+        <s:if test="dealAmounts.size != 0">
+        <s:iterator value="dealAmounts" var="entry" status="status">
+            <tr class="${status.odd ? 'odd':'even'}">
+                <td>
+                    ${status.index+1}
+                </td>
+                <td class="left">
+                    <s:property value="company"/>
+                </td>
+                <td class="left">
+                    <s:property value="percent"/> %
+                </td>
+                <td class="left">
+                    <s:property value="amount"/>
+                </td>
+                <td class="left">
+                    <s:date name="dealTime" format="yyyy年MM月"/>
+                </td>
+                <td class="left">
+                    <s:property value="orderBy"/>
+                </td>
+                <td><a href="<s:url value='/admin/deal-amount/%{id}/edit'/>" >编辑</a>&nbsp;&nbsp;
+                         <a href="<s:url value='/admin/deal-amount/%{id}/delete'/>"
+                         onclick="return delConfirm();"><s:text name="delete"></s:text></a>
+                </td>
+            </tr>
+        </s:iterator>
+        </s:if>
+        <s:else>
+            <tr>
+                <td colspan="7" class="center"><s:text name="nodata"/></td>
+            </tr>
+        </s:else>
+    </tbody>
+</table>
+</body>
+</html>

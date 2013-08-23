@@ -1,0 +1,82 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev: 235 $
+ * $Author: liang.zhou $
+ * $LastChangedDate: 2012-12-18 11:29:50 +0800 (周二, 18 十二月 2012) $
+ *
+ */
+
+package com.boventech.sacwh.dao.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import com.boventech.cms.dao.impl.AbstractDaoImpl;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.sacwh.dao.DealAmountDao;
+import com.boventech.sacwh.module.DealAmount;
+import com.google.common.base.Strings;
+
+@Repository
+public class DealAmountDaoImpl extends AbstractDaoImpl<DealAmount, Integer> implements DealAmountDao {
+
+    private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("unchecked")
+    public List<DealAmount> listAllOrderbyOrder(PageIndex pageIndex) {
+        return (List<DealAmount>) this.executeListWithPagingOutOfParams(
+                "from DealAmount order by dealTime desc, totalAmount desc", pageIndex);
+    }
+
+    @SuppressWarnings("unchecked")
+    public DealAmount findLatest() {
+        String hql = "from DealAmount order by date_format(dealTime,'%Y%m%d') desc";
+        List<DealAmount> dealAmounts = (List<DealAmount>) this.executeListWithPagingOutOfParams(hql, null);
+        return dealAmounts.isEmpty() ? null : dealAmounts.get(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<DealAmount> listAll() {
+        String hql = "from DealAmount order by orderBy asc";
+        List<DealAmount> dealAmounts = (List<DealAmount>) executeListWithPagingOutOfParams(hql, null);
+        return dealAmounts;
+    }
+
+    // 批量删除的dao方法
+    public void deleteAll(List<DealAmount> list) {
+        this.getHibernateTemplate().deleteAll(list);
+    }
+
+    // 根据公司名称和日期查找交易信息
+    @SuppressWarnings({ "unchecked" })
+    public List<DealAmount> search(PageIndex pageIndex, DealAmount dealAmount) {
+        // TODO Auto-generated method stub
+
+        // 对日期格式化以便查询
+        String dealTime = "";
+        if (dealAmount.getDealTime() != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
+            dealTime = sdf.format(dealAmount.getDealTime());
+        }
+
+        // 根据查询的信息拼凑hql语句
+        StringBuilder hql = new StringBuilder("from DealAmount where 1=1");
+        if (!Strings.isNullOrEmpty(dealAmount.getCompany())) {
+            hql.append(" and company like '%" + dealAmount.getCompany() + "%'");
+        }
+        if (dealAmount.getDealTime() != null && !dealAmount.getDealTime().equals("")) {
+            hql.append(" and dealTime between '"+dealTime+"-01' and '"+dealTime+"-31'");
+        }
+        hql.append(" order by orderBy asc");
+
+        return (List<DealAmount>) this.executeListWithPagingOutOfParams(hql.toString(), pageIndex);
+    }
+
+}

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app id="starter" version="2.4"
+         xmlns="http://java.sun.com/xml/ns/j2ee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+  <display-name>hbiur</display-name>
+
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath*:**/*Context.xml</param-value>
+	</context-param>
+	
+	<!-- application params init -->
+	<listener>
+		<listener-class>com.boventech.cms.action.util.ApplicationListener</listener-class>
+	</listener>
+	
+	<!-- url pattern engine int -->
+	<listener>
+		<listener-class>com.boventech.cms.action.util.URLPatternEngine</listener-class>
+	</listener>
+	
+	<listener>
+		<listener-class>com.boventech.cms.action.util.LDAPEngineListener</listener-class>
+	</listener>
+	
+	<session-config>
+		<session-timeout>60000</session-timeout>
+	</session-config>
+
+	<filter>
+		<filter-name>urlFilter</filter-name>
+		<filter-class>com.boventech.sr4j.servlet.URLFilter</filter-class>
+	</filter>
+
+	<filter>
+		<filter-name>utf8-filter</filter-name>
+		<filter-class>com.boventech.cms.action.util.EncodingFilter</filter-class>
+	</filter>
+	
+	 <!-- 编码方式过滤器 -->
+  <filter>
+    <filter-name>EncodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+  </filter>
+  
+  <filter>
+  	<filter-name>fetchAttachFilter</filter-name>
+  	<filter-class>com.boventech.cms.action.util.FetchAttachFilter</filter-class>
+  </filter>
+  
+   <filter>
+    <filter-name>OpenSessionInViewFilter</filter-name>
+    <filter-class>org.springframework.orm.hibernate3.support.OpenSessionInViewFilter</filter-class>
+  </filter>
+
+  <!-- Filters -->
+  <!-- START SNIPPET: filter -->
+  	<filter>
+        <filter-name>action2-cleanup</filter-name>
+        <filter-class>org.apache.struts2.dispatcher.ActionContextCleanUp</filter-class>
+    </filter>
+      <filter>
+        <filter-name>sitemesh</filter-name>
+        <filter-class>com.opensymphony.module.sitemesh.filter.PageFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>action2</filter-name>
+        <filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+    </filter>
+    <!-- END SNIPPET: filter -->
+    
+	<filter-mapping>
+		<filter-name>utf8-filter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+    <filter-mapping>
+    	<filter-name>urlFilter</filter-name>
+    	<url-pattern>/*</url-pattern>
+    </filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>fetchAttachFilter</filter-name>
+		<url-pattern>/upload/file/*</url-pattern>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>EncodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>OpenSessionInViewFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+    
+	<filter-mapping>
+        <filter-name>action2-cleanup</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>sitemesh</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>action2</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+
+    <servlet>
+    	<servlet-name>jspSupportServlet</servlet-name>
+    	<servlet-class>org.apache.struts2.views.JspSupportServlet</servlet-class>
+    	<load-on-startup>5</load-on-startup>
+    </servlet>
+
+    <!-- Welcome file lists -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+    
+    <error-page>
+		<error-code>404</error-code>
+		<location>/404.jsp</location>
+	</error-page>
+	<error-page>
+		<error-code>505</error-code>
+		<location>/505.jsp</location>
+	</error-page>
+	<error-page>
+		<exception-type>java.lang.Exception</exception-type>
+		<location>/505.jsp</location>
+	</error-page>
+
+</web-app>

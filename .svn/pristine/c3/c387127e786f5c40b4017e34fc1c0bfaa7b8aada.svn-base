@@ -1,0 +1,151 @@
+package com.boventech.cms.module.node;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import com.boventech.cms.module.download.Attachment;
+import com.boventech.cms.module.user.User;
+
+/**
+ * 
+ * @author Junxue.rao class for comment on entry
+ * 
+ */
+@Entity
+@Table(name = "ENTRY_COMMENT")
+public class Comment implements Serializable {
+
+    private static final long serialVersionUID = -989874720344167165L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
+
+    private String username;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User user;
+
+    private Date addTime;
+
+    @Lob
+    private String content;
+
+    private String ip;
+
+    private int vote;
+
+    private Integer entryId;
+
+    private boolean audited;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Attachment attachment;
+    
+    
+    public Attachment getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Date getAddTime() {
+        return addTime;
+    }
+
+    public void setAddTime(Date addTime) {
+        this.addTime = addTime;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public int getVote() {
+        return vote;
+    }
+
+    public void setVote(int vote) {
+        this.vote = vote;
+    }
+
+    public Integer getEntryId() {
+        return entryId;
+    }
+
+    public void setEntryId(Integer entryId) {
+        this.entryId = entryId;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj != null && obj instanceof Comment) {
+            Comment temp = (Comment) obj;
+            return temp.getId() != null && temp.getId().equals(this.id);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.id.hashCode() * 24 + this.addTime.hashCode();
+    }
+
+    public boolean isAudited() {
+        return audited;
+    }
+
+    public void setAudited(boolean audited) {
+        this.audited = audited;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+}

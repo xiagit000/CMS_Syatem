@@ -1,0 +1,305 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.action.admin;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.boventech.cms.action.AdminAction;
+import com.boventech.cms.action.util.FlashMessageConstants;
+import com.boventech.cms.module.user.User;
+import com.boventech.sacwh.module.News;
+import com.boventech.sacwh.module.Revert;
+import com.boventech.sacwh.service.NewsService;
+import com.boventech.sacwh.service.RevertService;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.util.file.FileUtil;
+import com.boventech.util.math.Util;
+import com.boventech.util.user.UserRight;
+import com.boventech.web.annotation.RequireLogin;
+import com.boventech.web.annotation.RequireRight;
+
+@Results({
+    @Result(name = "show", type = "dispatcher", location = "news/show.jsp"),
+    @Result(name = "new", type = "dispatcher", location = "news/new.jsp"),
+    @Result(name = "edit", type = "dispatcher", location = "news/edit.jsp"),
+    @Result(name = "reverts", type = "dispatcher", location = "news/reverts.jsp"),
+    @Result(name = "addRevert", type = "dispatcher", location = "revert/new.jsp"),
+
+    @Result(name = "noReverters", type = "dispatcher", location = "news/noReverters.jsp"),
+    @Result(name = "list", type = "redirect", location = "/admin/news"),
+    @Result(name = "create", type = "redirect", location = "/admin/news")
+})
+@RequireLogin
+@RequireRight(right = UserRight.NORMAL)
+public class NewsAction extends AdminAction {
+    
+    private Logger log = LoggerFactory.getLogger(NewsAction.class);
+
+    private static final long serialVersionUID = 1L;
+    
+    private News news;
+    
+    private List<News> newes;
+    
+    private NewsService newsService;
+
+    private RevertService revertService;
+    
+    private List<Revert> reverts;
+    
+    private Revert revert;
+    
+    private File attachment;
+    
+    private String attachmentFileName;
+    
+    private Integer reserved;
+    
+    @Resource
+    private String basePath;
+    
+    @Resource
+    private String attachmentPath;
+    
+    private List<User> users;
+    
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
+
+    public void setRevertService(RevertService revertService) {
+        this.revertService = revertService;
+    }
+
+    public List<Revert> getReverts() {
+        return reverts;
+    }
+
+    public void setReverts(List<Revert> reverts) {
+        this.reverts = reverts;
+    }
+
+    public News getNews() {
+        return news;
+    }
+
+    public void setNews(News news) {
+        this.news = news;
+    }
+
+    public List<News> getNewes() {
+        return newes;
+    }
+
+    public void setNewes(List<News> newes) {
+        this.newes = newes;
+    }
+
+    public NewsService getNewsService() {
+        return newsService;
+    }
+
+    public void setNewsService(NewsService newsService) {
+        this.newsService = newsService;
+    }
+
+    @Override
+    public HttpHeaders index() {
+        this.newes = this.newsService.listAll(getPageIndex());
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    public HttpHeaders reverts(){
+        this.news = this.newsService.findById(getIntegerId());
+        this.reverts = this.revertService.listAllByNews(getPageIndex(), this.news);
+        return new DefaultHttpHeaders("reverts").disableCaching();
+    }
+
+    public HttpHeaders addRevert(){
+        return new DefaultHttpHeaders("addRevert").disableCaching();
+    }
+    
+    @Override
+    public HttpHeaders show() {
+        this.news = this.newsService.findById(getIntegerId());
+        this.revert = this.revertService.findByUserAndNews(getCurrentUser().getId(),this.news.getId());
+        return new DefaultHttpHeaders(SHOW).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders create() {
+        News news = new News();
+        if (this.attachment != null) {
+            uploadFile(news); //上传文件
+            this.news.setAttachmentFileName(news.getAttachmentFileName());
+            this.news.setFilepath(news.getFilepath());
+        }
+        this.newsService.save(this.news);
+        return new DefaultHttpHeaders(CREATE).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return new DefaultHttpHeaders(NEW).disableCaching();
+    }
+
+    @Override
+    public String update() {
+        News news = this.newsService.findById(getIntegerId());
+        news.setTitle(this.news.getTitle());
+        news.setContent(this.news.getContent());
+        news.setUpdateTime(new Date());
+        if(this.reserved == null && news.getAttachmentFileName() != null){
+            deleteFile(news); //删除文件
+        }
+        if (this.attachment != null) {
+            if(news.getAttachmentFileName() != null){
+                deleteFile(news); //删除文件
+            }
+            uploadFile(news); //上传文件
+        }
+        this.newsService.update(news);
+        String msg = getText(FlashMessageConstants.UPDATE_SUCCESS);
+        addFlashMessage(msg);
+        return LIST;
+    }
+
+    /**
+     * 上传文件
+     * @param news
+     */
+    private void uploadFile(News news) {
+        String fileName = Util.getRandomNumber() + FileUtil.getExt(attachmentFileName);
+        String baseDir = ActionUtil.getContextRealPath() + this.basePath + this.attachmentPath;
+        String filePath = File.separator + getCurrentUser().getId();
+        File destination = FileUtil.newFile(baseDir + filePath, fileName);
+        String path = this.basePath + this.attachmentPath + filePath + File.separator + fileName;
+        try {
+            FileUtils.copyFile(attachment, destination);
+        } catch (IOException e) {
+            log.info(e.getMessage());
+        }
+        news.setAttachmentFileName(fileName);
+        news.setFilepath(path);
+    }
+
+    /**
+     * 删除文件
+     * @param news
+     */
+    private void deleteFile(News news) {
+        File file = new File(ActionUtil.getContextRealPath() + news.getFilepath());
+        //判断文件是否存在，存在则删除文件
+        if(file.exists())
+            file.delete();
+        news.setAttachmentFileName(null);
+        news.setFilepath(null);
+        this.newsService.update(news);
+    }
+
+    public HttpHeaders showNoReverter() {
+        this.users = this.newsService.getNoReverter(getIntegerId());
+        return new DefaultHttpHeaders("noReverters").disableCaching();
+    }
+    
+    @Override
+    public String edit() {
+        this.news = this.newsService.findById(getIntegerId());
+        return EDIT;
+    }
+
+    @Override
+    public String destroy() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+    public String delete() {
+        this.newsService.deleteByNews(getIntegerId());
+        String msg = getText(FlashMessageConstants.DELETE_SUCCESS);
+        addFlashMessage(msg);
+        return redirect();
+    }
+
+    public Revert getRevert() {
+        return revert;
+    }
+
+    public void setRevert(Revert revert) {
+        this.revert = revert;
+    }
+
+    public File getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(File attachment) {
+        this.attachment = attachment;
+    }
+
+    public Integer getReserved() {
+        return reserved;
+    }
+
+    public void setReserved(Integer reserved) {
+        this.reserved = reserved;
+    }
+
+    public String getBasePath() {
+        return basePath;
+    }
+
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
+    }
+
+    public String getAttachmentPath() {
+        return attachmentPath;
+    }
+
+    public void setAttachmentPath(String attachmentPath) {
+        this.attachmentPath = attachmentPath;
+    }
+
+    public RevertService getRevertService() {
+        return revertService;
+    }
+
+    public String getAttachmentFileName() {
+        return attachmentFileName;
+    }
+
+    public void setAttachmentFileName(String attachmentFileName) {
+        this.attachmentFileName = attachmentFileName;
+    }
+
+
+}

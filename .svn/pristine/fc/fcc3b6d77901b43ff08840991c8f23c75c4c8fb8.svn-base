@@ -1,0 +1,32 @@
+.nav ul li {
+	height: 30px;
+	margin-top: 1px;
+}
+
+.list,.info {
+	width: auto;
+}
+
+.clear {
+	display: none;
+}
+
+.high_tr td {
+	height: auto;
+}
+
+.news {
+	height: 476px;
+}
+
+.nei_c {
+	position: relative;
+}
+
+.pic_news img{
+	width: 600px;
+}
+
+.my_editor{
+	width: 99%;
+}

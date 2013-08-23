@@ -1,0 +1,121 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.module;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+/**
+ * 交易量
+ * @author Blue
+ *
+ */
+@Entity
+@Table(name = "sacwh_dealamount")
+public class DealAmount implements Serializable{
+    
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -989874720344167165L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
+    
+    private String company;
+    
+    private int percent;
+    
+    private Date createTime = new Date();
+    
+    private Date updateTime;
+    
+    private Date dealTime;
+    
+    private long amount;
+    
+    private int orderBy;
+    
+    public Date getDealTime() {
+        return dealTime;
+    }
+
+    public void setDealTime(Date dealTime) {
+        this.dealTime = dealTime;
+    }
+
+    public long getAmount() {
+        return amount;
+    }
+
+    public void setAmount(long amount) {
+        this.amount = amount;
+    }
+
+    public int getOrderBy() {
+        return orderBy;
+    }
+
+    public void setOrderBy(int orderBy) {
+        this.orderBy = orderBy;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    public int getPercent() {
+        return percent;
+    }
+
+    public void setPercent(int percent) {
+        this.percent = percent;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
+    
+}

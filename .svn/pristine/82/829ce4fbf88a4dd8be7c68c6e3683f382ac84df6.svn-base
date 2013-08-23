@@ -1,0 +1,145 @@
+package com.boventech.cms.service.impl;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.boventech.cms.dao.ImageDao;
+import com.boventech.cms.module.Image;
+import com.boventech.cms.module.user.User;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.cms.service.ImageService;
+import com.boventech.util.file.FileUtil;
+import com.boventech.util.file.ImageZoom;
+import com.boventech.util.math.Util;
+
+@Service
+@Transactional
+public class ImageServiceImpl extends StorageServiceImpl implements ImageService{
+	
+	private static final char SLASH_CHAR = '/';
+
+	private static final String ICON = "icon";
+
+	private static final Logger LOG = LoggerFactory.getLogger(ImageServiceImpl.class);
+	
+	private static final int ICON_WIDTH = 100;
+	
+	private static final int ICON_HEIGHT = 100;
+
+	private ImageDao imageDao;
+	
+	public void delete(Image image) {
+		if(image != null){
+			this.imageDao.delete(image);
+			String filePath = getRealBase();
+			File imageFile = FileUtil.newFile(filePath, image.getPath());
+			File iconFile = FileUtil.newFile(filePath, image.getIconImg());
+			FileUtil.delete(imageFile);
+			FileUtil.delete(iconFile);
+		}
+	}
+
+	public Image findById(Integer id) {
+		return this.imageDao.findById(id);
+	}
+
+	public void save(Image image) {
+		this.imageDao.save(image);
+	}
+
+	public void update(Image image) {
+		this.imageDao.update(image);
+	}
+
+	public void setImageDao(ImageDao imageDao) {
+		this.imageDao = imageDao;
+	}
+
+	public Image saveImage(File imageFile, String imageFileName, User user) {
+		return saveImageAndIcon(imageFile, imageFileName, user, ICON_WIDTH, ICON_HEIGHT);
+	}
+	
+	public Image saveImage(File imageFile, String imageFileName, User user, int width, int height) {
+		return saveImageAndIcon(imageFile, imageFileName, user, width, height);
+	}
+	
+	private Image saveImageAndIcon(File imageFile, String imageFileName, User user, int width, int height) {
+		String fileName = Util.getRandomNumber() + FileUtil.getExt(imageFileName);
+		String baseDir = this.getRealImagePath();
+		String filePath = File.separator + user.getId();
+		File destination = FileUtil.newFile(baseDir + filePath, fileName);
+		try {
+			FileUtils.copyFile(imageFile, destination);
+			String iconPath = filePath + File.separator + ICON;
+			saveIcon(destination,baseDir + iconPath , fileName, width, height);
+			Image image = new Image();
+			String imgPath = this.getBaseImagePath() + filePath + File.separator + fileName;
+			String iconImg = this.getBaseImagePath() + iconPath + File.separator + fileName;
+			image.setPath(ignoreSystem(imgPath));
+			image.setIconImg(ignoreSystem(iconImg));
+			image.setExt(FileUtil.getPureExt(imageFileName));
+			image.setFilename(imageFileName);
+			image.setAddTime(new Date());
+			image.setFileSize(imageFile.length());
+			this.imageDao.save(image);
+			return image;
+		} catch (IOException e) {
+			LOG.info(e.getMessage());
+		}
+		return null;
+	}
+	
+	private String ignoreSystem(String path){
+		if(path != null)
+			return path.replace(File.separatorChar, SLASH_CHAR);
+		return null;
+	}
+	
+	private void saveIcon(File file, String realIconPath, String fileName, int width ,int height){
+		if(file != null){
+			File icon = FileUtil.newFile(realIconPath, fileName);
+			ImageZoom zoom = new ImageZoom(file,icon,width,height);
+			zoom.makeImg();
+		}
+	}
+
+	public File getImageFile(Integer imageId) {
+		String realPath = this.getRealBase();
+		Image image = this.imageDao.findById(imageId);
+		if(image != null)
+			return new File(realPath + recoveSystem(image.getPath()));
+		return null;
+	}
+
+	private String recoveSystem(String path) {
+		if(path != null){
+			return path.replace(SLASH_CHAR, File.separatorChar);
+		}
+		return null;
+	}
+
+	public List<Image> list(PageIndex pageIndex) {
+		return this.imageDao.list(pageIndex);
+	}
+
+	public File getIconFile(Integer imageId) {
+		String realPath = this.getRealBase();
+		Image image = this.imageDao.findById(imageId);
+		if(image != null)
+			return new File(realPath + recoveSystem(image.getIconImg()));
+		return null;
+	}
+
+	public List<Image> list() {
+		return this.imageDao.list();
+	}
+
+}

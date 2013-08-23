@@ -1,0 +1,22 @@
+.tu{
+	height: 228px;
+}
+.nei_b{
+ 	min-height:228px;
+}
+
+.list,.info{
+	width: auto;
+}
+
+.editor{
+	border:1 solid #5A8BE7;
+	width: 99%;
+}
+
+.left2{
+	height: 330px;
+}
+.nei_c{
+	position:relative;
+}

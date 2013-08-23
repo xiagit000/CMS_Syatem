@@ -1,0 +1,147 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@taglib uri="/struts-tags" prefix="s"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="keywords" content="${application.keyWords }" />
+<meta name="description" content="${application.description }" />
+<title>${menu.name}--${application.systemName }</title>
+<link href="<s:url value="/templates/default/static/css/tt.css"/>"
+	rel="stylesheet" type="text/css" />
+<script src="<s:url value="/templates/default/static/js/jquery-1.8.0.min.js"/>" type="text/javascript" language="javascript"></script>
+<%-- <script src="<s:url value="/templates/default/static/js/common.js"/>"
+	type="text/javascript" language="javascript"></script>
+<script
+	src="<s:url value="/templates/default/static/js/curvycorners.js"/>"
+	type="text/javascript" language="javascript"></script> --%>
+
+</head>
+<body>
+	<div id="wraper">
+
+		<s:include value="../../open/head.jsp"></s:include>
+
+		<script type="text/javascript">
+    $(function(){
+        var ul =$('#clickNavi li').find('ul');
+        ul.hide();
+        var cl = $('#clickNavi li').find('a');
+        cl.click(function(){
+            if($(this).next().is(':hidden')){
+                ul.hide();
+                $(this).next().show();
+                $(this).parent().addClass("on");
+                $(this).parent().siblings().removeClass("on");
+            }else{
+                $(this).next().hide();
+                $(this).parent().removeClass("on");
+            }
+        })
+    })
+</script>
+
+		<div id="main" class="clearfix">
+			<div id="location">
+				<a href="<s:url value="/open"/>">首页</a> <span>&gt;&gt;</span> <span><s:iterator
+						value="parentMenus" id="pm">
+						<s:if test="#pm.link">
+							<a href="${pm.address}">${pm.name}</a>
+							<span class="guid"></span>
+							<span>&gt;&gt;</span>
+						</s:if>
+						<s:else>
+							<a href="<s:url value='/open/menu/%{#pm.nodeId}'/>">${pm.name}</a>
+							<span class="guid"></span>
+							<span>&gt;&gt;</span>
+						</s:else>
+					</s:iterator> <span>${menu.name}</span></span>
+
+			</div>
+			
+			<script>
+				$(function(){
+					var url = $("#href_1").attr("href");
+                    $.get(url,function(data){
+                        
+                        if(ms = data.match(/<div class="zhengwen">([\s\S]+)<\!--zhengwen-->/)){
+                            $(".list_right2").html("<div id='article'>"+ms[0]+"</div>");
+                        }
+                    });
+                    return false;
+	            });
+				
+				$(function(){
+					$(".ajax").click(function(){
+						var url = $(this).attr("href");
+						$.get(url,function(data){
+							
+							if(ms = data.match(/<div class="zhengwen">([\s\S]+)<\!--zhengwen-->/)){
+								$(".list_right2").html("<div id='article'>"+ms[0]+"</div>");
+							}
+							//alert(ms[0]);
+						});
+					    return false;	
+					});
+				});
+			</script>
+			
+			
+			<s:if test="menu.children.size() > 0 && menu.name.equals('合法经营机构')">
+
+				<div id="list_left">
+					<div id="seclink">
+						<ul class="listfir">
+
+							<s:iterator value="menu.children" id="mc" status="status">
+                                    <li class="up">
+                                        <s:if test="children.size == 0 && #mc.link">
+                                                <a id="href_${status.count}" href="<s:url value='/%{address}'/>" target="${blank}" class="ajax">${name}</a><span class="guid"></span>
+                                         </s:if>
+                                        </li>
+                                </s:iterator>
+						</ul>
+					</div>
+				</div>
+			</s:if>
+
+			<div class="${menu.children.size() > 0 ? 'list_right2' : ''}">
+
+				<div id="list">
+					<s:if test="entrys.size == 0">
+						<div class="open_nodata">
+							<s:text name="nodata"></s:text>
+						</div>
+					</s:if>
+					<s:else>
+						<ul>
+							<s:iterator value="entrys" var="e">
+								<li><a
+									class="${application.highlight&&e.hot?'hot':'normal'}"
+									href="<s:url value='%{url(#e)}'/>">${e.title} </a> <span>[<s:date
+											name="#e.publishedTime"
+											format="%{getText('simpleDateFormat')}" />]
+								</span></li>
+							</s:iterator>
+						</ul>
+					</s:else>
+				</div>
+				<s:if test="entrys.size != 0">
+					<div id="page">
+						<ul class="pagelist">
+							<s:include value="/res/plugins/page.jsp"></s:include>
+						</ul>
+					</div>
+				</s:if>
+			</div>
+		</div>
+		<s:include value="../../open/foot.jsp" />
+	</div>
+
+
+
+
+
+</body>
+</html>

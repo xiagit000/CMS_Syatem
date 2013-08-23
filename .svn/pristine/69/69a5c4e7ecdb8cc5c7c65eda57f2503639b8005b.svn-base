@@ -1,0 +1,286 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev: Rev $
+ * $Author: Author $
+ * $LastChangedDate: LastChangedDate $
+ *
+ */
+
+package com.boventech.sacwh.action.admin;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+
+import com.boventech.cms.action.AdminAction;
+import com.boventech.sacwh.module.DealAmount;
+import com.boventech.sacwh.service.DealAmountService;
+import com.boventech.util.user.UserRight;
+import com.boventech.web.annotation.RequireLogin;
+import com.boventech.web.annotation.RequireRight;
+
+@Results({
+    @Result(name = "list", type = "redirect", location = "/admin/deal-amount")
+})
+@RequireLogin
+@RequireRight(right = UserRight.ADMIN)
+public class DealAmountUploadAction extends AdminAction{
+
+    private static final long serialVersionUID = -2378741748769889570L;
+    
+    private DealAmountService dealAmountService;
+    
+    private Date dealTime;
+
+    private static final String LOWER_E = "e";
+    
+    private static final String UPPER_E = "E";
+
+    private static final char C_POINT = '.';
+
+    private static final String POINT = ".";
+
+    private static final char C_ZERO = '0';
+    
+    private static final char DBC_BLANK = (char) 32;
+
+    private static final char SBC_BLANK = (char) 12288;
+
+    private File excelFile;
+    
+    private String fileName;
+
+    @Override
+    public HttpHeaders index() {
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders show() {
+        return null;
+    }
+
+    @Override
+    public String update() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return null;
+    }
+    
+    /**
+     * 导入Excel
+     */
+    @Override
+    public HttpHeaders create() {
+//        this.fileName = this.excelFile.getName();
+//        URL url = this.getClass().getClassLoader().getResource(fileName);
+//        this.file = new File(url.getPath());
+        
+        HSSFWorkbook workbook = getWorkBook(this.excelFile);
+        HSSFSheet sheet = workbook.getSheetAt(1);
+        List<DealAmount> dealAmounts = new ArrayList<DealAmount>();
+        for (int i = sheet.getFirstRowNum() + 4; i <= sheet.getLastRowNum()-1; i++) {
+            HSSFRow row = sheet.getRow(i);
+            DealAmount dealAmount = new DealAmount();
+            for (short j = 0; j < 3; j++) {
+                String value = getCellValue(row, j);
+                switch (j) {
+                case 1:
+                    dealAmount.setCompany(value);
+                    break;
+                case 2:
+                    double aaa = Double.parseDouble(value);
+                    dealAmount.setTotalAmount(aaa);
+                    break;
+                default:
+                    break;
+                }
+            }
+            if(dealAmount.getCompany() != null && dealAmount.getCompany().length() > 0){
+                dealAmount.setDealTime(this.dealTime);
+                dealAmount.setOrderBy(0);
+                dealAmount.setPercent(0);
+                dealAmounts.add(dealAmount);
+            }
+        }
+        for(DealAmount dealAmount : dealAmounts){
+            this.dealAmountService.save(dealAmount);
+        }
+        
+        return new DefaultHttpHeaders("list").disableCaching();
+    }
+
+    @Override
+    public String edit() {
+        return null;
+    }
+
+    @Override
+    public String destroy() {
+        return null;
+    }
+    
+    /**
+     * 从文件流获取工作表
+     * @param excelFile 文件
+     * @return 工作表
+     */
+    protected HSSFWorkbook getWorkBook(File excelFile) {
+        POIFSFileSystem fileSystem = null;
+        HSSFWorkbook workbook = null;
+        try {
+            fileSystem = new POIFSFileSystem(new FileInputStream(excelFile));
+            workbook = new HSSFWorkbook(fileSystem);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return workbook;
+    }
+    
+
+    /**
+     * 获取行row内序号为index的单元格的值
+     * @param row 行
+     * @param index 序号
+     * @return 单元格的值
+     */
+    @SuppressWarnings("deprecation")
+    protected String getCellValue(HSSFRow row, short index) {
+        String value = null;
+        if (row != null) {
+            if (index < row.getLastCellNum()) {
+                HSSFCell cell = row.getCell(index);
+                if (cell != null) {
+                    int type = cell.getCellType();
+                    //value = trim(cell.getCellFormula());
+                    if (type == 0) {
+//                        long temp = (long)cell.getNumericCellValue();
+                        double temp = cell.getNumericCellValue();
+                        String tempA = temp + "";
+                            
+                        if(index ==2){
+                            boolean resultE = tempA.contains("E");
+                            if(resultE){
+                                String num=tempA.substring(tempA.indexOf('E')+1,tempA.length());
+                                int b=Integer.parseInt(num);
+//                                boolean result = tempA.contains(".");
+                                tempA=tempA.substring(0,tempA.indexOf('.'))+tempA.substring(tempA.indexOf('.')+1,tempA.indexOf('E'));
+                                boolean result = tempA.length() > b;
+                                if(result){
+                                    tempA=tempA.substring(0,b+1)+"."+tempA.substring(b+1,tempA.length());
+                                }
+                            }
+                            value = tempA;
+                        }
+                        
+//                        value = String.valueOf(temp);
+//                        value = formatNumericValue(temp);
+                    } else if (type == 1)
+                        value = trim( cell.getStringCellValue() );
+                    else
+                        return null;
+                }
+            }
+        }
+        return value;
+    }
+    
+
+    /**
+     * 将double类型的数转换为最简的字符串
+     * @param temp double数
+     * @return 字符串
+     */
+    public static String formatNumericValue(double temp) {
+        String value = String.valueOf(temp);
+        if (value != null && (value.indexOf(UPPER_E) >= 0 || value.indexOf(LOWER_E) >= 0)) {
+            return String.valueOf((int) temp);
+        }
+        int locate = value.indexOf(POINT);
+        if (locate >= 0) {
+            StringBuffer buffer = new StringBuffer(value);
+            for (int i = value.length() - 1; i >= locate; i--) {
+                if (buffer.charAt(i) == C_ZERO)
+                    buffer.deleteCharAt(i);
+                else if (buffer.charAt(i) == C_POINT) {
+                    buffer.deleteCharAt(i);
+                    break;
+                } else
+                    break;
+            }
+            value = buffer.toString();
+        }
+        return value;
+    }
+    
+    /**
+     * 对任意字符串进行trim操作，并用半角空格代替全角空格
+     * @param value 待trim的值
+     * @return trim 操作后的值
+     */
+    public static String trim(final String value) {
+        if (value != null && value.length() > 0) {
+            String temp = value.trim();
+            temp = temp.replace(SBC_BLANK, DBC_BLANK);
+            return temp.trim();
+        }
+        return null;
+    }
+    
+    public DealAmountService getDealAmountService() {
+        return dealAmountService;
+    }
+
+    public void setDealAmountService(DealAmountService dealAmountService) {
+        this.dealAmountService = dealAmountService;
+    }
+
+    public Date getDealTime() {
+        return dealTime;
+    }
+
+    public void setDealTime(Date dealTime) {
+        this.dealTime = dealTime;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public File getExcelFile() {
+        return excelFile;
+    }
+
+    public void setExcelFile(File excelFile) {
+        this.excelFile = excelFile;
+    }
+
+}

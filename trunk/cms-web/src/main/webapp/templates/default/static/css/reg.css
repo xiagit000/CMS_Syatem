@@ -1,0 +1,30 @@
+@CHARSET "UTF-8";
+
+/* 验证错误提示 */
+.vmsg{
+	display:none;
+	color:red;
+	vertical-align:middle;
+	padding-left:15px;
+	background:url(../images/del.gif) no-repeat 2px 3px;	
+}
+
+/* 输入项提示信息 */
+.vhint{
+	margin-left:2px;
+	color:#777;
+	vertical-align:middle;
+}
+
+/* 必填 */
+.vhint span{
+	color:red;
+	font-family:宋体;
+	margin-right:3px;
+}
+
+.vmsg_ul{
+	min-height: 20px;
+	padding: 0;
+	margin: 0;	
+}

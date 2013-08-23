@@ -1,0 +1,9 @@
+#rss format
+declare_begin = <?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>{0}</title><link>{1}</link><description>{0}</description><lastBuildDate>TUES, 19 JAN 2010 10:37:00 GMT</lastBuildDate><language>zh</language>
+declare_end = </channel></rss>
+rss_item = <item><title>{0}</title><link>{1}</link><guid>{2}</guid><pubDate>{3}</pubDate><description>{4}</description></item>
+
+
+normalCopyRight = \u535A\u6587\u695A\u6C47\u79D1\u6280\u53D1\u5C55\u6709\u9650\u516C\u53F8 copyright \u00a9 2012
+
+kindeditor.image.upload.response = <html><head><title>Insert Image</title><meta http-equiv="content-type" content="text/html; charset=utf-8"></head><body><script type="text/javascript">parent.KE.plugin["image"].insert("{0}","{1}","{2}","{3}","{4}","{5}");</script></body></html>

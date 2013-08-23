@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>File Too Big error!</title>
+</head>
+<body>
+<style type="text/css">
+.error {
+	margin-top: 50px;
+	width: 800px;
+	margin: 0 auto;
+	margin-top: 50px;
+	height: 120px;
+	border: 3px #c2c2c2 dashed;
+	background: #F8FED1;
+	padding: 30px;
+}
+
+.error p {
+	font-size: 2.4em;
+	margin-top: 12px;
+	color: #777;
+}
+
+h2 {
+	font-size: 2.2em;
+	font-weight: 600;
+	color: #FF3300;
+	border-bottom: 2px #c2c2c2 solid;
+	padding: 3px;
+}
+</style>
+	<div class="error">
+    	<h2>File Too Big error!</h2>
+        <p>您所上传的附件大小超过了限制！即将自动返回！</p>
+    </div>
+    <script type="text/javascript">
+	setTimeout("history.go(-1)",2000);
+	</script>
+</body>
+</html>

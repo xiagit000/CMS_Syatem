@@ -1,0 +1,66 @@
+package com.boventech.cms.service.node.impl;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.boventech.cms.dao.node.CommentDao;
+import com.boventech.cms.module.node.Comment;
+import com.boventech.cms.module.node.Entry;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.cms.service.node.CommentService;
+
+@Service
+@Transactional
+public class CommentServiceImpl implements CommentService{
+
+	private CommentDao commentDao;
+	
+	public void delete(Comment t) {
+		this.commentDao.delete(t);
+	}
+
+	public Comment findById(Integer id) {
+		return this.commentDao.findById(id);
+	}
+
+	public void save(Comment t) {
+		this.commentDao.save(t);
+	}
+
+	public void update(Comment t) {
+		this.commentDao.update(t);
+	}
+
+	public void setCommentDao(CommentDao commentDao) {
+		this.commentDao = commentDao;
+	}
+
+	public List<Comment> listByEntry(Entry entry) {
+		if(entry != null){
+			return this.commentDao.listByEntryId(entry.getId());
+		}
+		return Collections.emptyList();
+	}
+
+	public List<Comment> listByEntry(Entry entry, PageIndex pageIndex) {
+		if(entry != null){
+			return this.commentDao.listByEntryId(pageIndex, entry.getId());
+		}
+		return Collections.emptyList();
+	}
+
+	public int count(Entry entry) {
+		if(entry != null){
+			return this.commentDao.countByEntryId(entry.getId());
+		}
+		return 0;
+	}
+	
+	public int countByEntryId(int entryId) {
+		return this.commentDao.countByEntryId(entryId);
+	}
+
+}

@@ -1,0 +1,56 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.service.impl;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.sacwh.dao.DealAmountDao;
+import com.boventech.sacwh.module.DealAmount;
+import com.boventech.sacwh.service.DealAmountService;
+
+@Service
+@Transactional
+public class DealAmountServiceImpl implements DealAmountService {
+
+    private DealAmountDao DealAmountDao;
+    
+    public void setDealAmountDao(DealAmountDao dealAmountDao) {
+        DealAmountDao = dealAmountDao;
+    }
+
+    public void save(DealAmount t) {
+        this.DealAmountDao.save(t);
+    }
+
+    public void delete(DealAmount t) {
+        this.DealAmountDao.delete(t);
+    }
+
+    public void update(DealAmount t) {
+        this.DealAmountDao.update(t);
+    }
+
+    public DealAmount findById(Integer id) {
+        return this.DealAmountDao.findById(id);
+    }
+
+    public List<DealAmount> listAll(PageIndex pageIndex) {
+        return this.DealAmountDao.listAllOrderbyOrder(pageIndex);
+    }
+    
+}

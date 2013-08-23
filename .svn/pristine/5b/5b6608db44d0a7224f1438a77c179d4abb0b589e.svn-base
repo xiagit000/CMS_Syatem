@@ -1,0 +1,43 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.dao.impl;
+
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import com.boventech.cms.dao.impl.AbstractDaoImpl;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.sacwh.dao.RevertDao;
+import com.boventech.sacwh.module.News;
+import com.boventech.sacwh.module.Revert;
+
+@Repository
+public class RevertDaoImpl extends AbstractDaoImpl<Revert, Integer> implements RevertDao {
+
+    private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("unchecked")
+    public List<Revert> listAllByNews(PageIndex pageIndex, News news) {
+        return (List<Revert>) executeListWithPaging("from Revert where news = ?",pageIndex, news);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Revert findByUserAndNews(Integer userId, Integer newsId) {
+        List<Revert> revert = (List<Revert>) executeListWithPaging("from Revert where revertUser.id = ? AND news.id=?", null, userId,newsId);
+        return revert.isEmpty() ? null : revert.get(0);
+    }
+
+    
+}

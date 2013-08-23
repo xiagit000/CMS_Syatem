@@ -1,0 +1,259 @@
+package com.boventech.cms.action;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.boventech.cms.action.util.WebUtil;
+import com.boventech.cms.module.Image;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.cms.service.ImageService;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.util.user.UserRight;
+import com.boventech.web.annotation.RequireLogin;
+import com.boventech.web.annotation.RequireRight;
+
+@ParentPackage(value="hbiur-default")
+@RequireLogin(exclude={"show","icon"})
+@RequireRight(right=UserRight.ADMIN, exclude={"show","icon"})
+@Results( { @Result(name = "showInfo", type = "redirect", location = "user/manage/self/edit"),
+        @Result(name = "list", type = "dispatcher", location = "image/list.jsp") })
+public class ImageUploadAction extends AbstractAction{
+	
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	private static final Logger LOG = LoggerFactory.getLogger(OpenAction.class);
+
+	private static final String KINDEDITOR_IMAGE_UPLOAD_RESPONSE =
+		"kindeditor.image.upload.response";
+
+    private static final int BUFFER_SIZE = 1024;
+
+	private static final String IMAGE_JPG = "image/jpg";
+
+	private static final String NO_SUCH_IMAGE = "No Such image!";
+
+    private File image;
+
+    private String imageFileName;
+
+    private Image currentImage;
+
+    private ImageService imageService;
+
+    private List<Image> images;
+
+    private String imgTitle;
+
+    private String imgWidth;
+
+    private String imgHeight;
+
+    private String imgBorder;
+
+    private String imageId;
+    
+    public ImageUploadAction(){
+    	
+    }
+
+    public void upload() {
+        
+    }
+
+    public String listAll() {
+        return "list";
+    }
+
+    private void showPic(File file) {
+        if (file == null) {
+            ActionUtil.writeResponse(NO_SUCH_IMAGE);
+        }else{
+        	outputPic(file);
+        }
+    }
+
+	private void outputPic(File file) {
+		HttpServletResponse response = ActionUtil.getHttpResponse();
+        OutputStream output = null;
+        InputStream in = null;
+        byte[] b = new byte[BUFFER_SIZE];
+        try {
+            output = response.getOutputStream();
+            response.reset();
+            response.setContentType(IMAGE_JPG);
+            in = new FileInputStream(file);
+            BufferedImage bufferedImage = ImageIO.read(in);
+            ImageIO.write(bufferedImage, "JPEG", output);
+            if (in != null) {
+                while ((in.read(b)) != -1) {
+                    output.write(b);
+                    in.close();
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            LOG.info(e.getMessage());
+        } catch (IOException e) {
+            LOG.info(e.getMessage());
+        } finally{
+            closeStream(output, in);
+        }
+	}
+
+    private void closeStream(OutputStream output, InputStream in) {
+    	if(in != null){
+            try {
+                in.close();
+            } catch (IOException e) {
+                LOG.info(e.getMessage());
+            }
+        }
+        if(output != null){
+            try {
+                output.close();
+            } catch (IOException e) {
+                LOG.info(e.getMessage());
+            }
+        }
+	}
+
+	public void icon() {
+        int id = getIntegerId();
+        File imageFile = this.imageService.getIconFile(id);
+        showPic(imageFile);
+    }
+
+    @Override
+    public HttpHeaders create() {
+    	if (this.image != null) {
+            this.currentImage = this.imageService.saveImage(this.image,
+            		this.imageFileName, getCurrentUser());
+            String imageUrl = ActionUtil.getContextPath() + this.currentImage.getPath();
+            String[] args = {imageId,imageUrl,imgTitle,imgWidth,imgHeight,imgBorder};
+            String result = getText(KINDEDITOR_IMAGE_UPLOAD_RESPONSE, args);
+            ActionUtil.writeResponse(result);
+        }
+    	return null;
+    }
+
+    @Override
+    public String destroy() {
+        return null;
+    }
+
+    @Override
+    public String edit() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders index() {
+        PageIndex pageIndex = WebUtil.createPageIndex();
+        this.images = this.imageService.list(pageIndex);
+        return new DefaultHttpHeaders("list").disableCaching();
+    }
+
+    @Override
+    public HttpHeaders show() {
+        int id = getIntegerId();
+        File imageFile = this.imageService.getImageFile(id);
+        showPic(imageFile);
+        return null;
+    }
+
+	@Override
+    public String update() {
+        return null;
+    }
+
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
+
+    public void setImageService(ImageService imageService) {
+    	System.out.println("set image service");
+        this.imageService = imageService;
+    }
+
+    public void setImage(File image) {
+        this.image = image;
+    }
+
+    public void setImageFileName(String imageFileName) {
+        this.imageFileName = imageFileName;
+    }
+
+    public List<Image> getImages() {
+        return images;
+    }
+
+    public String getImgTitle() {
+        return imgTitle;
+    }
+
+    public void setImgTitle(String imgTitle) {
+        this.imgTitle = imgTitle;
+    }
+
+    public String getImgWidth() {
+        return imgWidth;
+    }
+
+    public void setImgWidth(String imgWidth) {
+        this.imgWidth = imgWidth;
+    }
+
+    public String getImgHeight() {
+        return imgHeight;
+    }
+
+    public void setImgHeight(String imgHeight) {
+        this.imgHeight = imgHeight;
+    }
+
+    public String getImgBorder() {
+        return imgBorder;
+    }
+
+    public void setImgBorder(String imgBorder) {
+        this.imgBorder = imgBorder;
+    }
+
+	public Image getCurrentImage() {
+		return currentImage;
+	}
+
+	public void setCurrentImage(Image currentImage) {
+		this.currentImage = currentImage;
+	}
+
+}

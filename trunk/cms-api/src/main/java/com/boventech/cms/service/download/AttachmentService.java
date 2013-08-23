@@ -1,0 +1,26 @@
+package com.boventech.cms.service.download;
+
+import java.io.File;
+import java.util.List;
+
+import com.boventech.cms.module.download.Attachment;
+import com.boventech.cms.module.node.Entry;
+import com.boventech.cms.module.user.User;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.cms.service.BasicService;
+
+public interface AttachmentService extends BasicService<Attachment>{
+
+    List<Attachment> list(PageIndex pageIndex);
+    
+	List<Attachment> save(File[] attachments, String[] attachmentFileNames,
+			String[] attachmentContentTypes, User currentUser);
+
+	List<Attachment> getRemovedAttachments(Integer[] removedIds);
+
+	void removeAttachments(Entry entry, List<Integer> removeIds);
+
+	Attachment findByFilePath(String filePath);
+	
+	void deleteAttachment(Attachment attachment);
+}

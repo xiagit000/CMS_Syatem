@@ -1,0 +1,140 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev: 170 $
+ * $Author: liang.zhou $
+ * $LastChangedDate: 2012-11-14 16:45:27 +0800 (星期三, 14 十一月 2012) $
+ *
+ */
+
+package com.boventech.sacwh.module;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import com.boventech.cms.module.user.User;
+import com.google.common.collect.Lists;
+
+@Entity
+@Table(name = "sacwh_news")
+public class News implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
+    
+    private String title;
+    
+    @Lob
+    private String content;
+    
+    private String file;
+    
+    private Date createTime = new Date();
+    
+    private Date updateTime;
+    
+    private String attachmentFileName;
+    
+    private String filepath;
+
+    @OneToMany(cascade=CascadeType.ALL, mappedBy="news", orphanRemoval = true)
+    private List<Revert> reverts;
+    
+    public String getFile() {
+        return file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public List<Revert> getReverts() {
+        return reverts;
+    }
+
+    public void setReverts(List<Revert> reverts) {
+        this.reverts = reverts;
+    }
+
+    public String getFilepath() {
+        return filepath;
+    }
+
+    public void setFilepath(String filepath) {
+        this.filepath = filepath;
+    }
+
+    public String getAttachmentFileName() {
+        return attachmentFileName;
+    }
+
+    public void setAttachmentFileName(String attachmentFileName) {
+        this.attachmentFileName = attachmentFileName;
+    }
+    
+    public List<User> getReverters(){
+        List<User> users = Lists.newArrayList();
+        for(Revert revert : this.reverts){
+            users.add(revert.getRevertUser());
+        }
+        return users;
+    }
+    
+}

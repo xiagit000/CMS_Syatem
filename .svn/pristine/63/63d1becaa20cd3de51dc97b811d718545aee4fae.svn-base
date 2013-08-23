@@ -1,0 +1,175 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+    <%@taglib uri="/struts-tags" prefix="s"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>
+<s:text name="addEntry"/>
+</title>
+</head>
+<body>
+<s:include value="../common/calendar.jsp"></s:include>
+<s:include value="../common/showEditor.jsp"></s:include>
+<script type="text/javascript">
+//<![CDATA[
+function checkNull(){
+	var content = KE.util.getSrcData('content1');
+	content = $('<p>'+content+'</p>').text();
+	if(content == null || content.trim().length == 0){
+		alert('<s:text name="contentNotNull"/>');
+		return false;
+	}
+	document.getElementById('plain').value = content;
+	return true;
+}
+$(function(){
+	//addRule("#file",		"#fileVmsg",		"(!bt|ext[jpg,jpeg,bmp,png])",		"(<s:text name='errorFormat'/>)");
+	//addRule("#summary",	"#summaryVmsg",	"(len[0,300])",		"(<s:text name='errorLength'/>)");
+	addRule("#title",	"#titleVmsg",	"(bt)",		"(<s:text name='mustFill'/>)");
+});
+
+function previewSub() {
+	$("#preview").val("true");
+	$("form[name=example]").attr("target","_blank");
+	if (checkNull()) {
+		var content = KE.util.getSrcData('content1');
+		$("#content1").val(content);
+		$("form[name=example]").submit();
+	}
+	return false;
+}
+
+function doSub() {
+	$("#preview").val("false");
+	$("form[name=example]").removeAttr("target");
+	return true;
+}
+//]]>
+</script>
+<div class="class_title"><s:text name="addEntry"/></div>
+  <form name="example" method="post" action="<s:url value='/admin/entry'/>" enctype="multipart/form-data"
+	 onsubmit="return checkNull();">
+	 <input type="hidden" name="plainText" id="plain"/>
+	 <input type="hidden" name="nodeId" value="${nodeId}"/>
+	 <input type="hidden" name="link" value="${link}"/>
+	 <input type="hidden" name="continueURL" value="${continueURL}"/>
+	  <table class="info">
+	  <thead>
+		<tr>
+			<th class="two_col_head">
+				<s:text name="section"></s:text>
+			</th>
+			<th>
+				<s:text name="info"></s:text>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		  	<tr>
+				<td><s:text name="title"/></td>
+				<td><input type="text" class="w500" name="title" id="title" maxlength="50"/>
+				<span id="titleVmsg" class="vmsg"></span><span class="vhint"><span>&#42;</span><s:text name="titleLimit"/></span>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="summary"/></td>
+				<td><textarea name="summary" rows="5" cols="25" class="w500" id="summary"></textarea>
+				<span id="summaryVmsg" class="vmsg"></span><span class="vhint"><s:text name="summaryLimit"/></span>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="entry_keyword"/></td>
+				<td><input type="text" class="w500" name="entryKeyword" id="entryKeyword" maxlength="30"/>
+				<span id="keywordVmsg" class="vmsg"></span><span class="vhint"><span></span><s:text name="entry_seo_note"/></span>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="entry_description"/></td>
+				<td><input type="text" class="w500" name="entryDescription" id="entryDescription" maxlength="100"/>
+				<span id="descriptionVmsg" class="vmsg"></span><span class="vhint"><span></span><s:text name="entry_seo_note"/></span>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="isSimpleStyle"/></td>
+				<td>
+					<input type="checkbox" name="simple" value="true"/>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="expiredDay"/></td>
+				<td>
+					<input class="w50" type="text" name="expiredDay" value="${application.highlightDays }"/><label><s:text name="day"/></label>
+				</td>
+			</tr>
+		  	<tr>
+		  	   <td>新闻访问权限</td>
+		  	   <td>
+		  	       <input type="radio" checked="checked" value="0" name="accessRight"/><label>所有人</label>
+		  	       <input type="radio" value="1" name="accessRight"/><label>普通用户</label>
+		  	       <input type="radio" value="2" name="accessRight"/><label>管理员</label>
+		  	   </td>
+		  	</tr>
+            <tr>
+				<td><s:text name="imageUpload"/></td>
+				<td><input type="file" name="image" id="file"/>
+				<span id="fileVmsg" class="vmsg"></span><span class="vhint"><s:text name="imageShowTip"/>，<s:text name="imageLimit"/></span>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="imageDescription"/></td>
+				<td><input class="w500" type="text" name="description" id="desc" maxlength="85"/>
+				<span id="descVmsg" class="vmsg"></span><span class="vhint"><s:text name="imageDescLimit"/></span>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="attachmentAccessStrategy"/></td>
+				<td>
+					<input type="radio" checked="checked" value="PUBLICACESS" name="tag"/><label><s:text name="PUBLICACESS"/></label>
+					<input type="radio" value="LOGINACESS" name="tag"/><label><s:text name="LOGINACESS"/></label>
+					<s:if test="!roles.empty">
+					<input type="radio" value="ROLEBASED" name="tag"/><label><s:text name="ROLEBASED"/></label>
+						<s:select list="roles" listKey="id" listValue="name" theme="simple" 
+						name="roleId"></s:select>
+					</s:if>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="attachment"/></td>
+				<td class="files">
+					<p id="filep">
+						<input type="file" name="attachment" class="file" size="50" onchange="fileType(this,6)"/><font class="error" color=red></font>
+						<input type="button" value="<s:text name="add"/>" id="addBtn" class="btn bw2" onclick="addFile(this)" />			
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td><s:text name="userPublishedDate"/></td>
+				<td>
+					<input id="d12" type="text" name="userPublishedDate"/>
+					<img onclick="WdatePicker({el:'d12'})" src="<s:url value='/javascript/My97DatePicker/skin/datePicker.gif'/>" width="16" height="22" align="absmiddle"/>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<s:text name="content"/>
+				</td>
+			</tr>
+		</tbody>
+	  </table>
+	    <div class="editor">
+	      <textarea rows="3" cols="25" id="content1" name="content" class="my_editor"></textarea>
+	    </div>
+	    <div class="rowb">
+	    	<div class="row_left">
+	    		<input type="hidden" name="preview" id="preview" value="false"/>
+	    		<input class="btn bw2" type="submit" onclick="return previewSub();" value="<s:text name='preview'/>"/>
+	    		<input class="btn bw2" type="submit" onclick="return doSub();" name="button" value="<s:text name='finish'/>"/>
+	    		<input class="btn bw2" type="button" onclick="back();" value="<s:text name='back'/>"/>
+	    	</div>
+	    	<div class="clear"></div>
+	    </div>
+  	</form>
+</body>
+</html>

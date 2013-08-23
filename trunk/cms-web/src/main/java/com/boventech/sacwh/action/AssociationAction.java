@@ -1,0 +1,101 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev: 116 $
+ * $Author: zinan.liao $
+ * $LastChangedDate: 2012-10-30 14:19:52 +0800 (星期二, 30 十月 2012) $
+ *
+ */
+
+package com.boventech.sacwh.action;
+
+import java.util.List;
+
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+
+import com.boventech.cms.action.OpenAction;
+import com.boventech.cms.module.node.Entry;
+import com.boventech.cms.module.node.Node;
+
+@Results({
+    @Result(name = "create", type = "redirect", location = "/open"),
+    @Result(name = "index", type = "dispatcher", location = "sacwh/womendexiehui/index.jsp")
+})
+public class AssociationAction extends OpenAction {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    private List<Entry> entrys;
+    
+    public List<Entry> getEntrys() {
+        return entrys;
+    }
+
+    public void setEntrys(List<Entry> entrys) {
+        this.entrys = entrys;
+    }
+
+    @Override
+    public HttpHeaders index() {
+
+        Node n = this.getNodeService().findByName("我们的协会");
+        setId(String.valueOf(n.getId()));
+        super.setLinks();
+        this.setMenu(getMenuById(getIntegerId()));
+        if (this.getMenu() != null) {
+            if (this.getMenu().isLink()) {
+            } else {
+                Node node = this.getNodeService().findById(getIntegerId());
+                this.entrys = this.getEntryService().listPublishedByNode(node, getPageIndex());
+                locateParentMenu();
+            }
+        }
+    
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    
+    @Override
+    public HttpHeaders show() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders create() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return null;
+    }
+
+    @Override
+    public String update() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String edit() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String destroy() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+}

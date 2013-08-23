@@ -1,0 +1,200 @@
+package com.boventech.cms.action;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts2.rest.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.boventech.cms.module.Image;
+import com.boventech.cms.service.ImageService;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.util.math.NumberUtil;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class ImageManageAction extends AbstractAction{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5668555685077054052L;
+	
+	private static final Logger LOG = LoggerFactory.getLogger(ImageManageAction.class);
+
+	private String order;
+	
+	private ImageService imageService;
+	
+	public HttpHeaders index(){
+		HttpServletRequest request = ActionUtil.getHttpRequest();
+		HttpServletResponse response = ActionUtil.getHttpResponse();
+		LOG.info("get image manager request: " + request.getRequestURI());
+		List<Image> images = this.imageService.list();
+		sort(images, this.order);
+		List<String> files = new ArrayList<String>();
+		initFiles(images, files);
+		JSONObject json = combineResult(files);
+		response.setContentType("application/json; charset=UTF-8");
+		response.setHeader("Charset", "UTF-8");
+		response.setCharacterEncoding("UTF-8");
+		ActionUtil.writeResponse(json.toString());
+		return null;
+	}
+
+	private JSONObject combineResult(List<String> files) {
+		JSONArray array = JSONArray.fromObject(files);
+		String filesInfo = array.toString();
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("moveup_dir_path", "/");//相对于根目录的当前目录
+		result.put("current_dir_path", "/");
+		result.put("current_url", "/");//当前目录的URL
+		result.put("total_count", files.size());
+		result.put("file_list", filesInfo);
+		JSONObject json = JSONObject.fromObject(result);
+		return json;
+	}
+
+	private void initFiles(List<Image> images, List<String> files) {
+		String contextPath = ActionUtil.getContextPath();
+		for(Image image:images){
+			Map<String, Object> fileMap = new HashMap<String, Object>();
+			fileMap.put("contextPath", contextPath);
+			fileMap.put("is_dir", false);
+			fileMap.put("has_file", false);
+			fileMap.put("filesize", image.getFileSize());
+			fileMap.put("dir_path", image.getPath());
+			fileMap.put("icon_path", image.getIconImg());
+			fileMap.put("is_photo", true);
+			fileMap.put("filetype", image.getExt());
+			fileMap.put("filename", image.getFilename());//文件名，包含扩展名
+			fileMap.put("datetime", NumberUtil.formatDate(image.getAddTime(), "yyyy-MM-dd"));//文件最后修改时间
+			JSONObject jsonObject = JSONObject.fromObject(fileMap);
+			files.add(jsonObject.toString());
+		}
+	}
+	
+	static class FileSizeComparator implements Comparator<Image> ,Serializable{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1739917331487905763L;
+
+		public int compare(Image o1, Image o2) {
+			return (int) (o1.getFileSize() - o2.getFileSize());
+		}
+	}
+	
+	static class FileNameComparator implements Comparator<Image>, Serializable{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4935608495667164997L;
+
+		public int compare(Image o1, Image o2) {
+			return o1.getFilename().compareTo(o2.getFilename());
+		}
+	}
+
+	static class FileTypeComparator implements Comparator<Image> ,Serializable{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7651737935309116698L;
+
+		public int compare(Image o1, Image o2) {
+			return o1.getExt().compareTo(o2.getExt());
+		}
+	}
+
+	static class FileDateComparator implements Comparator<Image> ,Serializable {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3804222961027518763L;
+
+		public int compare(Image o1, Image o2) {
+			return o1.getAddTime().compareTo(o2.getAddTime());
+		}
+	}
+	
+	private void sort(List<Image> images, String orderType) {
+		Comparator<Image> comparator = null;
+		switch (ImageSortType.getSortType(orderType)) {
+		case SIZE:
+			comparator = new FileSizeComparator();
+			break;
+		case NAME:
+			comparator = new FileNameComparator();
+			break;
+		case TYPE:
+			comparator = new FileTypeComparator();
+			break;
+		case DATE:
+			comparator = new FileDateComparator();
+			break;
+		default:
+			LOG.info("no such order type named: " + orderType);
+			break;
+		}
+		if(comparator != null)
+			Collections.sort(images, comparator);
+	}
+	
+	private enum ImageSortType{
+		SIZE,NAME,TYPE,DATE;
+		
+		public static ImageSortType getSortType(String type){
+			return ImageSortType.valueOf(type);
+		}
+	}
+
+	@Override
+	public HttpHeaders create() {
+		return null;
+	}
+
+	@Override
+	public String destroy() {
+		return null;
+	}
+
+	@Override
+	public String edit() {
+		return null;
+	}
+
+	@Override
+	public HttpHeaders editNew() {
+		return null;
+	}
+
+	@Override
+	public HttpHeaders show() {
+		return null;
+	}
+
+	@Override
+	public String update() {
+		return null;
+	}
+
+	public void setOrder(String order) {
+		this.order = order;
+	}
+
+	public void setImageService(ImageService imageService) {
+		this.imageService = imageService;
+	}
+
+}

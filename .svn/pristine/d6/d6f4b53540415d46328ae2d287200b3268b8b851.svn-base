@@ -1,0 +1,41 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.dao.impl;
+
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import com.boventech.cms.dao.impl.AbstractDaoImpl;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.sacwh.dao.DealAmountDao;
+import com.boventech.sacwh.module.DealAmount;
+
+@Repository
+public class DealAmountDaoImpl extends AbstractDaoImpl<DealAmount, Integer> implements DealAmountDao {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+
+    @SuppressWarnings("unchecked")
+    public List<DealAmount> listAllOrderbyOrder(PageIndex pageIndex) {
+        return (List<DealAmount>) this.executeListWithPagingOutOfParams("from DealAmount order by orderBy asc", pageIndex);
+    }
+
+    
+
+}

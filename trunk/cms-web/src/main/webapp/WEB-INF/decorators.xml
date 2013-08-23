@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<decorators defaultdir="/WEB-INF/decorators">
+    <!-- Any urls that are excluded will never be decorated by Sitemesh -->
+    <excludes>
+        <pattern>/nodecorate/*</pattern>
+        <pattern>/styles/*</pattern>
+        <pattern>/scripts/*</pattern>
+        <pattern>/images/*</pattern>
+        <pattern>/css/*</pattern>
+        <pattern>/flash/*</pattern>
+        <pattern>/javascript/*</pattern>
+        <pattern>/feed/*</pattern>
+        <pattern>/dojo/*</pattern>
+        <pattern>/struts/*</pattern>
+        <pattern>/static/*</pattern>
+        <pattern>/building</pattern>
+        
+        <pattern>*.jsp</pattern>
+        <pattern>/open*</pattern>
+        <pattern>/user*</pattern>
+        <pattern>/toLogin</pattern>
+        <pattern>/upload/*</pattern>
+        <pattern>/admin/description/manage/try/checkAlias*</pattern>
+    </excludes>
+    
+    <decorator name="manage" page="manage.jsp">
+        <pattern>/admin/*</pattern>
+    </decorator>
+
+</decorators>

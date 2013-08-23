@@ -1,0 +1,609 @@
+package com.boventech.cms.action.admin;
+
+import java.io.File;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+
+import com.boventech.cms.action.AdminAction;
+import com.boventech.cms.action.util.FlashMessageConstants;
+import com.boventech.cms.action.util.URLPatternEngine;
+import com.boventech.cms.event.Event;
+import com.boventech.cms.event.EventManager;
+import com.boventech.cms.event.EventType;
+import com.boventech.cms.module.Image;
+import com.boventech.cms.module.download.AccessStrategyTag;
+import com.boventech.cms.module.download.AttachAccessStrategy;
+import com.boventech.cms.module.download.Attachment;
+import com.boventech.cms.module.download.RoleBasedAccessStrategy;
+import com.boventech.cms.module.node.Entry;
+import com.boventech.cms.module.node.Menu;
+import com.boventech.cms.module.node.Node;
+import com.boventech.cms.module.node.Order;
+import com.boventech.cms.module.right.Operation;
+import com.boventech.cms.module.right.Role;
+import com.boventech.cms.service.ImageService;
+import com.boventech.cms.service.download.AttachmentService;
+import com.boventech.cms.service.node.EntryService;
+import com.boventech.cms.service.node.NodeService;
+import com.boventech.cms.service.right.RoleService;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.web.annotation.Before;
+import com.google.common.base.Strings;
+
+@Results({
+        @Result(name = "preview", location = "/open/entry/pre", type = "redirect"),
+        @Result(name = "move_success", location = "/admin/entry", type = "redirect", params = { "nodeId",
+                "${nodeId}" }) })
+public class EntryAction extends AdminAction {
+
+    /**
+	 * 
+	 */
+    private static final long serialVersionUID = -1958830395397128711L;
+
+    private NodeService nodeService;
+
+    private EntryService entryService;
+
+    private Integer nodeId;
+
+    private List<Entry> entries;
+
+    private Node node;
+
+    private String title;
+
+    private String content;
+
+    private String plainText;
+
+    private Entry entry;
+
+    private boolean link;
+
+    private Menu currentMenu;
+
+    private List<Menu> parentMenus;
+
+    private List<Menu> childMenus;
+
+    private File image;
+
+    private String imageFileName;
+
+    private ImageService imageService;
+
+    private String description;
+
+    private boolean simple;
+
+    private String summary;
+
+    private int expiredDay;
+
+    private boolean preview;
+
+    private Date userPublishedDate;
+
+    private File[] attachments;
+
+    private String[] attachmentFileNames;
+
+    private String[] attachmentContentTypes;
+
+    private Integer[] reserved;
+
+    private AttachmentService attachmentService;
+
+    private AccessStrategyTag tag;
+
+    private RoleService roleService;
+
+    private Integer roleId;
+
+    private List<Role> roles;
+
+    private List<Menu> menus;
+
+    private String entryKeyword;
+
+    private String entryDescription;
+
+    private static final int ICON_WIDTH = 396;
+
+    //private static final int ICON_HEIGHT = 272;
+    
+    private static final int ICON_HEIGHT = 299;
+
+    private int position;
+    
+    private int accessRight;
+
+    private Image removed;
+
+    private boolean removeUploadedImage;
+
+    @Before(include = { "editNew", "index", "create", "up", "down" })
+    public void prepare() {
+        this.node = this.nodeService.findById(this.nodeId);
+    }
+
+    @Before(include = { "editNew", "edit" })
+    public void prepareRoles() {
+        this.roles = this.roleService.list();
+    }
+
+    @Before(include = { "index" })
+    public void prepareMenus() {
+        this.menus = this.nodeService.listUserManagedMenus(getCurrentUser());
+    }
+
+    public String url(Entry e) {
+        return URLPatternEngine.getEntryUrl(e);
+    }
+    
+    @Override
+    public HttpHeaders create() {
+        Entry entry = new Entry();
+        setEntryProperties(entry);
+        entry.setBelonged(this.node);
+        if (positionCanBeMoved()) {
+            int count = this.entryService.countByNode(this.node);
+            entry.setPosition(count + 1);
+        }
+        if (isPreview()) {
+            ActionUtil.setSession(PRE_ENTRY_KEY, entry);
+            return new DefaultHttpHeaders("preview").disableCaching();
+        } else {
+            this.entryService.save(entry);
+            doBroadCast(EventType.ADD_ENTRY, entry.getId());
+            redirectTo(this.getContinueURL());
+        }
+        return null;
+    }
+
+    /**
+     * set properties of entry
+     * 
+     * @param entry
+     */
+    private void setEntryProperties(Entry entry) {
+        entry.setTitle(this.title);
+        entry.setContent(this.content);
+        entry.setPlainText(this.plainText);
+        entry.setDescription(entryDescription);
+        entry.setKeyword(this.entryKeyword);
+        entry.setTimeline(new Date());
+        entry.setSimple(this.simple);
+        entry.setAccessRight(this.accessRight);
+        if(!Strings.isNullOrEmpty(this.summary)){
+            entry.setSummary(this.summary);
+        }else {
+            entry.setSummary(null);
+        }
+        entry.setExpiredDay(this.expiredDay);
+        entry.setAuthor(getCurrentUser());
+        entry.setUserPublishedDate(this.userPublishedDate);
+        if (this.image != null) {
+            Image currentImage = this.imageService.saveImage(this.image, this.imageFileName,
+                    getCurrentUser(), ICON_WIDTH, ICON_HEIGHT);
+            currentImage.setDescription(this.description);
+            this.removed = entry.getImage();
+            entry.setImage(currentImage);
+        } else if (this.removeUploadedImage) {
+            this.removed = entry.getImage();
+            entry.setImage(null);
+        }
+        if (reserved != null && reserved.length > 0) {
+            List<Integer> removeIds = getRemovedAttIds(entry.getAttachments(), reserved);
+            this.attachmentService.removeAttachments(entry, removeIds);
+        } else if (entry.hasAttachments()) {
+            entry.clearAttachments();
+        }
+        if (this.attachments != null) {
+            List<Attachment> atts = this.attachmentService.save(attachments, attachmentFileNames,
+                    attachmentContentTypes, getCurrentUser());
+            entry.addAttachments(atts);
+        }
+        if (entry.hasAttachments()) {
+            Role role = this.roleId != null ? this.roleService.findById(this.roleId) : null;
+            if (!isTagSame(tag, role, entry)) {
+                AttachAccessStrategy strategy = tag.newInstant(role);
+                entry.changeAttachStrategy(strategy);
+            }
+        }
+    }
+
+    private boolean isTagSame(AccessStrategyTag t, Role role, Entry e) {
+        if (t.equals(e.getAttachmentTag())) {
+            if (t.equals(AccessStrategyTag.ROLEBASED)) {
+                RoleBasedAccessStrategy strategy = (RoleBasedAccessStrategy) e.getAttachmentStrategy();
+                return strategy.getRole().equals(role);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private List<Integer> getRemovedAttIds(List<Attachment> atts, Integer[] reservedIds) {
+        int size = -1;
+        if (atts != null && !atts.isEmpty()) {
+            size = atts.size() - reservedIds.length;
+        }
+        if (size >= 0) {
+            List<Integer> result = new ArrayList<Integer>(size);
+            List<Integer> temp = Arrays.asList(reservedIds);
+            for (Attachment att : atts) {
+                Integer attId = att.getId();
+                if (!temp.contains(attId)) {
+                    result.add(attId);
+                }
+            }
+            return result;
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String destroy() {
+        this.entry = this.entryService.findById(getIntegerId());
+        if (this.entry != null) {
+            this.node = this.entry.getBelonged();
+            if (!node.isAuthrized(getCurrentUser(), Operation.EDIT_ENTRY)) {
+                return NO_RIGHT;
+            }
+            this.entryService.delete(this.entry);
+            if (Order.MANUAL.equals(this.node.getOrders()))
+                this.entryService.cleanPosition(this.node.getId(), this.entry.getPosition());
+            doBroadCast(EventType.DELETE_ENTRY, entry.getId());
+            redirect();
+            return null;
+        } else
+            return "404";
+    }
+
+    @Override
+    public String edit() {
+        this.entry = this.entryService.findById(getIntegerId());
+        if (this.entry != null) {
+            this.node = this.entry.getBelonged();
+            if (!node.isAuthrized(getCurrentUser(), Operation.EDIT_ENTRY)) {
+                return NO_RIGHT;
+            }
+            this.roleId = getRoleIdByAccessStrategy(this.entry.getAttachmentStrategy());
+            this.setContinueURL(getPreviousUrl());
+            return EDIT;
+        } else
+            return "404";
+    }
+
+    private Integer getRoleIdByAccessStrategy(AttachAccessStrategy attachmentStrategy) {
+        if (attachmentStrategy != null && attachmentStrategy.getTag().equals(AccessStrategyTag.ROLEBASED))
+            return ((RoleBasedAccessStrategy) attachmentStrategy).getRole().getId();
+        return null;
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        if (!node.isAuthrized(getCurrentUser(), Operation.ADD_ENTRY)) {
+            return new DefaultHttpHeaders(NO_RIGHT).disableCaching();
+        }
+        this.setContinueURL(getPreviousUrl());
+        return new DefaultHttpHeaders(NEW).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders index() {
+        this.childMenus = this.nodeService.listUserManagedMenuByParent(getCurrentUser(), this.nodeId);
+        if (this.node == null)
+            return new DefaultHttpHeaders(INDEX).disableCaching();
+        this.currentMenu = this.nodeService.getMenu(getCurrentUser(), this.node);
+        if (this.currentMenu == null)
+            return new DefaultHttpHeaders("404").disableCaching();
+        this.parentMenus = this.nodeService.listParentMenus(this.node);
+        if (this.currentMenu.isRight()) {
+            if (this.node.getChildren().size() != 0)
+                this.entries = this.entryService.listAllByNodeId(this.nodeId, getPageIndex());
+            else {
+                this.entries = this.entryService.listByNode(this.node);
+            }
+        }
+
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders show() {
+        return null;
+    }
+
+    @Override
+    public String update() {
+        this.entry = this.entryService.findById(getIntegerId());
+        if (this.entry != null) {
+            if (isPreview()) {
+                Entry previewEntry = new Entry();
+                // for lazy fetch
+                Node nodeForPrev = this.nodeService.findById(this.entry.getBelonged().getId());
+                previewEntry.setBelonged(nodeForPrev);
+                setEntryProperties(previewEntry);
+                if (previewEntry.getImage() != null) {
+                    previewEntry.getImage().setDescription(this.description);
+                }
+                ActionUtil.setSession(PRE_ENTRY_KEY, previewEntry);
+                return "preview";
+            }
+            setEntryProperties(this.entry);
+            if (this.entry.getImage() != null)
+                this.entry.getImage().setDescription(this.description);
+            this.entryService.update(this.entry);
+            if (this.removed != null)
+                this.imageService.delete(this.removed);
+            doBroadCast(EventType.UPDATE_ENTRY, entry.getId());
+        }
+        redirectTo(getContinueURL());
+        return null;
+    }
+
+    public String move() {
+        this.entry = this.entryService.findById(getIntegerId());
+        if (this.nodeId != null && this.entry != null) {
+            Node node = this.nodeService.findById(this.nodeId);
+            this.entryService.moveToNode(this.entry, node);
+            doBroadCast(EventType.MOVE_ENTRY, this.entry.getId());
+            String msg = MessageFormat.format(getText(FlashMessageConstants.ENTRY_MOVE_SUCCESS),
+                    this.entry.getTitle(), node.getName());
+            addFlashMessage(msg);
+            return "move_success";
+        }
+        redirect();
+        return null;
+    }
+
+    public String up() {
+        if (positionCanBeMoved()) {
+            this.entryService.shiftUp(getIntegerId(), this.nodeId, this.position);
+            redirect();
+            return null;
+        }
+        return "404";
+    }
+
+    public String down() {
+        if (positionCanBeMoved()) {
+            this.entryService.shiftDown(getIntegerId(), this.nodeId, this.position);
+            redirect();
+            return null;
+        }
+        return "404";
+    }
+
+    private boolean positionCanBeMoved() {
+        return this.node != null && this.node.positionCanBeMoved();
+    }
+
+    public List<Menu> getMenus() {
+        return this.menus;
+    }
+
+    public String publish() {
+        Entry entry = this.entryService.findById(getIntegerId());
+        if (entry != null) {
+            entry.setPublished(true);
+            entry.setPublishedDate(getCurrentDate());
+            entry.setAuthor(getCurrentUser());
+            this.entryService.update(entry);
+            addFlashMessage(getText(FlashMessageConstants.PUBLISH_SUCCESS));
+            doBroadCast(EventType.PUBLISH_ENTRY, entry.getId());
+        }
+        redirect();
+        return null;
+    }
+
+    public String unpublish() {
+        Entry entry = this.entryService.findById(getIntegerId());
+        if (entry != null) {
+            entry.setPublished(false);
+            entry.setPublishedDate(null);
+            entry.setAuthor(null);
+            this.entryService.update(entry);
+            addFlashMessage(getText(FlashMessageConstants.UN_PUBLISH_SUCCESS));
+            doBroadCast(EventType.UNPUBLISH_ENTRY, entry.getId());
+        }
+        redirect();
+        return null;
+    }
+
+    /**
+     * broadcast entry operation events.
+     * 
+     * @param type
+     *            EventType
+     * @param entryId
+     *            the id of entry
+     */
+    private void doBroadCast(EventType type, Integer entryId) {
+        Event event = new Event(getCurrentUser().getUsername(), type, entryId, Entry.class);
+        EventManager.getManager().broadcastEvent(event);
+    }
+
+    /*
+     * public List<Node> getNodes(){ return child(null); }
+     * 
+     * public List<Node> child(Integer parentId){ return
+     * this.nodeService.listNodes(parentId, true); }
+     */
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
+    }
+
+    public void setEntryService(EntryService entryService) {
+        this.entryService = entryService;
+    }
+
+    public void setNodeId(Integer nodeId) {
+        this.nodeId = nodeId;
+    }
+
+    public Integer getNodeId() {
+        return nodeId;
+    }
+
+    public List<Entry> getEntries() {
+        return entries;
+    }
+
+    public Node getNode() {
+        return node;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setPlainText(String plainText) {
+        this.plainText = plainText;
+    }
+
+    public Entry getEntry() {
+        return entry;
+    }
+
+    public void setLink(boolean link) {
+        this.link = link;
+    }
+
+    public boolean isLink() {
+        return link;
+    }
+
+    public Menu getCurrentMenu() {
+        return currentMenu;
+    }
+
+    public List<Menu> getChildMenus() {
+        return childMenus;
+    }
+
+    public List<Menu> getParentMenus() {
+        return parentMenus;
+    }
+
+    public void setImage(File image) {
+        this.image = image;
+    }
+
+    public void setImageFileName(String imageFileName) {
+        this.imageFileName = imageFileName;
+    }
+
+    public void setImageService(ImageService imageService) {
+        this.imageService = imageService;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setSimple(boolean simple) {
+        this.simple = simple;
+    }
+
+    public void setExpiredDay(int expiredDay) {
+        this.expiredDay = expiredDay;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public void setPreview(boolean preview) {
+        this.preview = preview;
+    }
+
+    public boolean isPreview() {
+        return preview;
+    }
+
+    public void setUserPublishedDate(Date userPublishedDate) {
+        this.userPublishedDate = userPublishedDate;
+    }
+
+    public void setAttachment(File[] attachments) {
+        this.attachments = attachments;
+    }
+
+    public void setAttachmentFileName(String[] attachmentFileNames) {
+        this.attachmentFileNames = attachmentFileNames;
+    }
+
+    public void setAttachmentContentType(String[] attachmentContentTypes) {
+        this.attachmentContentTypes = attachmentContentTypes;
+    }
+
+    public void setAttachmentService(AttachmentService attachmentService) {
+        this.attachmentService = attachmentService;
+    }
+
+    public void setReserved(Integer[] reserved) {
+        this.reserved = reserved;
+    }
+
+    public void setTag(AccessStrategyTag tag) {
+        this.tag = tag;
+    }
+
+    public void setRoleId(Integer roleId) {
+        this.roleId = roleId;
+    }
+
+    public void setRoleService(RoleService roleService) {
+        this.roleService = roleService;
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public Integer getRoleId() {
+        return roleId;
+    }
+
+    public void setEntryKeyword(String entryKeyword) {
+        this.entryKeyword = entryKeyword;
+    }
+
+    public void setEntryDescription(String entryDescription) {
+        this.entryDescription = entryDescription;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    public void setRemoveUploadedImage(boolean removeUploadedImage) {
+        this.removeUploadedImage = removeUploadedImage;
+    }
+
+    public int getAccessRight() {
+        return accessRight;
+    }
+
+    public void setAccessRight(int accessRight) {
+        this.accessRight = accessRight;
+    }
+}

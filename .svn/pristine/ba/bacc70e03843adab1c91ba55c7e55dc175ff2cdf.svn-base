@@ -1,0 +1,264 @@
+package com.boventech.cms.action.admin.user;
+
+import java.util.List;
+
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+
+import com.boventech.cms.action.AdminAction;
+import com.boventech.cms.action.util.FlashMessageConstants;
+import com.boventech.cms.action.util.SessionParameters;
+import com.boventech.cms.action.util.WebUtil;
+import com.boventech.cms.event.Event;
+import com.boventech.cms.event.EventManager;
+import com.boventech.cms.event.EventType;
+import com.boventech.cms.module.user.User;
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.util.file.Md5Util;
+import com.boventech.util.user.UserRight;
+import com.boventech.web.annotation.Before;
+import com.boventech.web.annotation.RequireRight;
+
+@Results({ @Result(name = "list", type = "redirect", location = "/admin/user/manage") })
+public class ManageAction extends AdminAction {
+
+    /**
+	 * 
+	 */
+    private static final long serialVersionUID = 1L;
+
+    private String username;
+
+    private String password;
+
+    private User user = new User();
+
+    private int message = -1;
+
+    private List<User> users;
+
+    private int userId;
+
+    private String type;
+
+    private String address;
+
+    private String email;
+
+    private String phone;
+
+    private String appendix;
+    
+    private int right;
+
+    private boolean ldapValidate;
+
+    public int getRight() {
+        return right;
+    }
+
+    public void setRight(int right) {
+        this.right = right;
+    }
+
+    @Before(include = { SHOW, DESTROY, "view", "freeze", "activate" })
+    public void prepare() {
+        this.userId = getIntegerId();
+        this.user = this.getUserService().findById(this.userId);
+        if (this.user == null)
+            forwardError();
+    }
+
+    public String activate() {
+        this.user.setActivated(true);
+        this.getUserService().update(this.user);
+        doBroadCast(EventType.ACTIVE_USER, user.getId());
+        return redirect();
+    }
+
+    public String freeze() {
+        this.user.setActivated(false);
+        this.getUserService().update(this.user);
+        doBroadCast(EventType.FREEZE_USER, user.getId());
+        return redirect();
+    }
+
+    @RequireRight(right = UserRight.SUPERADMIN)
+    @Override
+    public String destroy() {
+        try {
+            this.getUserService().delete(user);
+            doBroadCast(EventType.DELETE_USER, user.getId());
+        } catch (Exception e) {
+            addFlashMessage(getText(FlashMessageConstants.BATCH_DELETE_FAILURE));
+        }
+        return redirect();
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return new DefaultHttpHeaders(NEW).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders show() {
+        return new DefaultHttpHeaders(SHOW).disableCaching();
+    }
+
+    @Override
+    public String update() {
+        User current = getCurrentUser();
+        current.setAddress(this.address);
+        current.setEmail(this.email);
+        current.setPhone(this.phone);
+        current.setAppendix(this.appendix);
+        this.getUserService().update(current);
+        return SUCCESS;
+    }
+
+    @Override
+    public HttpHeaders index() {
+        PageIndex pageIndex = WebUtil.createPageIndex();
+        this.users = this.getUserService().list(pageIndex);
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    @Override
+    public String edit() {
+        this.user = getCurrentUser();
+        ActionUtil.setSession(SessionParameters.CURRENT_PORTRAINT, this.user.getPortrait());
+        return EDIT;
+    }
+
+    @Override
+    public HttpHeaders create() {
+        User current = new User();
+        current.setUsername(this.username);
+        if (!this.ldapValidate) {
+            current.setPassword(Md5Util.encodeByMd5(this.password));
+        } else {
+            current.setLdapValidate(this.ldapValidate);
+        }
+        current.setAddress(this.address);
+        current.setEmail(this.email);
+        current.setPhone(this.phone);
+        current.setAppendix(this.appendix);
+//        current.setUserRight(UserRight.ADMIN);
+        UserRight right = UserRight.getCorrespondingRight(this.right);
+        current.setUserRight(right);
+        current.setActivated(true);
+        this.getUserService().save(current);
+        doBroadCast(EventType.ADD_USER, current.getId());
+        return new DefaultHttpHeaders(LIST).disableCaching();
+    }
+
+    public HttpHeaders resetPassword(){
+        User user = this.getUserService().findById(getIntegerId());
+        user.setPassword(Md5Util.encodeByMd5("123456"));
+        this.getUserService().update(user);
+        String msg = getText(FlashMessageConstants.UPDATE_SUCCESS);
+        addFlashMessage(msg);
+        return new DefaultHttpHeaders(LIST).disableCaching();
+    }
+    
+    /**
+     * broadcast user operation events.
+     * 
+     * @param type
+     *            EventType
+     * @param userId
+     *            the id of user
+     */
+    private void doBroadCast(EventType type, Integer userId) {
+        Event event = new Event(getCurrentUser().getUsername(), type, userId, User.class);
+        EventManager.getManager().broadcastEvent(event);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public int getMessage() {
+        return message;
+    }
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAppendix() {
+        return appendix;
+    }
+
+    public void setAppendix(String appendix) {
+        this.appendix = appendix;
+    }
+
+    public void setLdapValidate(boolean ldapValidate) {
+        this.ldapValidate = ldapValidate;
+    }
+
+}

@@ -1,0 +1,25 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.service;
+
+import java.util.List;
+
+import com.boventech.cms.module.web.PageIndex;
+import com.boventech.cms.service.BasicService;
+import com.boventech.sacwh.module.Adword;
+
+public interface AdwordService extends BasicService<Adword>{
+
+    List<Adword> listAll(PageIndex pageIndex);
+}

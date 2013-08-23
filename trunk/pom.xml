@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.boventech.cms</groupId>
+  <version>1.0-SNAPSHOT</version>
+  <artifactId>cms</artifactId>
+  <packaging>pom</packaging>
+	<name>cms entry</name>
+	<url>http://www.myComp.com</url>
+	<description>cms entry</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+  <modules>
+    <module>cms-web</module>
+    <module>cms-module</module>
+    <module>cms-api</module>
+  </modules>
+
+
+
+
+	<repositories>
+		<repository>
+			<id>artifactory</id>
+			<name>my artifactory</name>
+			<url>http://www.boventech.com/artifactory/repo</url>
+		</repository>
+		<repository>
+			<id>jboss</id>
+			<name>jboss</name>
+			<url>https://repository.jboss.org/nexus/content/groups/public</url>
+		</repository>
+		<repository>
+		      <id>SpringSource Enterprise Bundle Repository – External Bundle Milestones</id>
+		      <url>http://repository.springsource.com/maven/bundles/milestone</url>
+		   </repository>
+		   <repository>
+		      <id>SpringSource Enterprise Bundle Repository – SpringSource Bundle Releases</id>
+		      <url>http://repository.springsource.com/maven/bundles/release</url>
+		   </repository>
+		   <repository>
+		      <id>SpringSource Enterprise Bundle Repository – External Bundle Releases</id>
+		      <url>http://repository.springsource.com/maven/bundles/external</url>
+		   </repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>artifactory</id>
+			<name>my artifactory</name>
+			<url>http://www.boventech.com/artifactory/plugins-releases
+			</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+
+	<!-- Build Settings -->
+	<build>
+		<resources>
+			<resource>
+				<filtering>false</filtering>
+				<directory>src/main/resources</directory>
+			</resource>
+			<resource>
+				<filtering>false</filtering>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**</include>
+				</includes>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<filtering>false</filtering>
+				<directory>src/test/java</directory>
+				<includes>
+					<include>**</include>
+				</includes>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+		</testResources>
+		<finalName>${project.artifactId}</finalName>
+		<plugins></plugins>
+		<pluginManagement>
+			<plugins>
+				<!-- add Eclipse WTP support -->
+				<plugin>
+					<artifactId>maven-eclipse-plugin</artifactId>
+					<configuration>
+						<wtpversion>2.0</wtpversion>
+						<projectNameTemplate>
+							[artifactId]
+						</projectNameTemplate>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.5</source>
+						<target>1.5</target>
+						<encoding>UTF-8</encoding>
+						<fork>true</fork>
+					
+						<compilerArguments>
+			            <nowarn />
+			            
+			            
+			          </compilerArguments>
+			          <showWarnings>true</showWarnings>
+			         
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<reporting>
+
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.0</version>
+				<configuration>
+					<dependencyLocationEnabled>false</dependencyLocationEnabled>
+				</configuration>
+			</plugin>
+
+			<!--
+				please comment plugin sorcerer on Mac platform because there is one
+				tools.jar problem (there is no tools.jar on Mac which is needed by
+				sorcerer)
+			-->
+			<plugin>
+				<groupId>org.jvnet.sorcerer</groupId>
+				<artifactId>maven-sorcerer-plugin</artifactId>
+				<configuration>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>findbugs-maven-plugin</artifactId>
+				<version>2.1</version>
+				<configuration>
+					<xmlOutput>true</xmlOutput>
+					<includeFilterFile>findbugs-include.xml</includeFilterFile>
+				</configuration>
+
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<configLocation>checkstyle.xml</configLocation>
+				</configuration>
+			</plugin>
+
+			<!--
+				<plugin> <groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId> <version>2.3</version>
+				</plugin> <plugin> <groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId> <version>2.1</version>
+				</plugin>
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<targetJdk>1.5</targetJdk>
+					<sourceEncoding>utf-8</sourceEncoding>
+				</configuration>
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>dashboard-maven-plugin</artifactId>
+				<version>1.0.0-beta-1</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jdepend-maven-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>javancss-maven-plugin</artifactId>
+				<configuration>
+					<failOnViolation>false</failOnViolation>
+				</configuration>
+			</plugin>
+
+
+		</plugins>
+	</reporting>
+
+
+</project>

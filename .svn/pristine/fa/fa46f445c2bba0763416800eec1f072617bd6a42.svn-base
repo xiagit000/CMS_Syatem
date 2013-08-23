@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>{0},恭喜您注册成为我系统的用户！</title>
+<style type="text/css">
+body {
+	font-size: 14px;
+	padding: 20px;
+	line-height: 20px;
+}
+p{
+	margin-bottom: 10px;
+}
+.bottom{
+	border-top: 1px solid gray;
+}
+</style>
+</head>
+<body>
+<p>亲爱的{0}，您好！祝贺您成功注册
+并成为其中一员。请您妥善保管好帐号信息，以免给您带来不必要的损失！
+</p>
+<p class="bottom">
+
+</p>
+</body>
+</html>

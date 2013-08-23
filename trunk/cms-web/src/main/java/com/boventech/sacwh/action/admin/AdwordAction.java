@@ -1,0 +1,123 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev: 208 $
+ * $Author: peng.xia $
+ * $LastChangedDate: 2012-11-30 10:45:36 +0800 (星期五, 30 十一月 2012) $
+ *
+ */
+
+package com.boventech.sacwh.action.admin;
+
+import java.util.List;
+
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+
+import com.boventech.cms.action.AdminAction;
+import com.boventech.sacwh.module.Adword;
+import com.boventech.sacwh.service.AdwordService;
+import com.boventech.util.user.UserRight;
+import com.boventech.web.annotation.RequireLogin;
+import com.boventech.web.annotation.RequireRight;
+
+@Results({
+    @Result(name = "new", type = "dispatcher", location = "adword/new.jsp"),
+    @Result(name = "edit", type = "dispatcher", location = "adword/edit.jsp"),
+    @Result(name = "list", type = "redirect", location = "/admin/adword"),
+    @Result(name = "create", type = "redirect", location = "/admin/adword")
+})
+@RequireLogin
+@RequireRight(right = UserRight.ADMIN)
+public class AdwordAction extends AdminAction {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    private Adword adword;
+
+    private AdwordService adwordService;
+    
+    private List<Adword> adwords;
+    
+    public Adword getAdword() {
+        return adword;
+    }
+
+    public void setAdword(Adword adword) {
+        this.adword = adword;
+    }
+
+    public List<Adword> getAdwords() {
+        return adwords;
+    }
+
+    public void setAdwords(List<Adword> adwords) {
+        this.adwords = adwords;
+    }
+
+    public void setAdwordService(AdwordService adwordService) {
+        this.adwordService = adwordService;
+    }
+
+    @Override
+    public HttpHeaders index() {
+        this.adwords = this.adwordService.listAll(getPageIndex());
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders show() {
+        this.adword = this.adwordService.findById(getIntegerId());
+        return new DefaultHttpHeaders(SHOW).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders create() {
+        this.adwordService.save(adword);
+        return new DefaultHttpHeaders(CREATE).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+
+        return new DefaultHttpHeaders(NEW).disableCaching();
+    }
+
+    @Override
+    public String update() {
+        Adword oldAdword = this.adwordService.findById(getIntegerId());
+        oldAdword.setTitle(this.adword.getTitle());
+        oldAdword.setContent(this.adword.getContent());
+        oldAdword.setOrderby(this.adword.getOrderby());
+        this.adwordService.update(oldAdword);
+        return LIST;
+    }
+
+    @Override
+    public String edit() {
+        this.adword = this.adwordService.findById(getIntegerId());
+        return EDIT;
+    }
+
+    @Override
+    public String destroy() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String delete() {
+        Adword adword = this.adwordService.findById(getIntegerId());
+        this.adwordService.delete(adword);
+        return redirect();
+    }
+    
+}

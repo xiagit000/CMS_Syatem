@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE struts PUBLIC 
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+    <constant name="struts.convention.action.suffix" value="Action"/>
+    <constant name="struts.convention.action.mapAllMatches" value="true"/>
+    <constant name="struts.convention.default.parent.package" value="rest-default"/>
+
+    <constant name="struts.convention.package.locators" value="action"/>
+    
+   <constant name="struts.convention.exclude.parentClassLoader" value="false" />
+    
+    <constant name="struts.convention.result.path" value="/page/"/>
+    
+    <!-- <include file="interceptors.xml"></include>
+     -->
+   
+    <package name="hbiur-global" extends="struts-default" abstract="true">
+    	<global-results>
+    		<result name="toAdminLogin" type="redirect">/toLogin</result>
+    		<result name="toOpenLogin" type="dispatcher">/templates/default/toOpenLogin.jsp</result>
+    		<result name="notAdmin" type="dispatcher">404.html</result>
+    		<result name="noRight" type="dispatcher">404.html</result>
+    	</global-results>
+    </package> 
+   
+   	<package name="hbiur-default" extends="hbiur-global" abstract="true">
+   		<interceptors>
+   			<interceptor name="performanceAnalysisInterceptor" class="com.boventech.strutsext.interceptor.PerformanceAnalysisInterceptor"></interceptor>
+   			<interceptor name="loginInterceptor" class="com.boventech.strutsext.interceptor.LoginInterceptor"></interceptor>
+   			<interceptor name="flashMessageInterceptor" class="com.boventech.cms.action.util.FlashMessageInterceptor"></interceptor>
+   			<interceptor name="beforeInterceptor" class="com.boventech.strutsext.interceptor.BeforeInterceptor"></interceptor>
+   			<interceptor name="rightInterceptor" class="com.boventech.strutsext.interceptor.RightInterceptor"></interceptor>
+   			<!-- 自定义的用于覆盖defaultStack中的fileUpload设置的拦截器 -->
+    		<interceptor name="fileUpload" class="com.boventech.cms.action.interceptor.UploadInterceptor"></interceptor>
+   			<interceptor-stack name="hbiurDefaultStack">
+   				<interceptor-ref name="performanceAnalysisInterceptor"></interceptor-ref>
+   				<interceptor-ref name="loginInterceptor"></interceptor-ref>
+   				<interceptor-ref name="flashMessageInterceptor"></interceptor-ref>
+   				<interceptor-ref name="rightInterceptor"></interceptor-ref>
+   				<interceptor-ref name="fileUpload"></interceptor-ref><!-- 用于覆盖defaultStack中的fileUpload设置 -->
+   				<interceptor-ref name="defaultStack"></interceptor-ref>
+   				<interceptor-ref name="beforeInterceptor"></interceptor-ref>
+   			</interceptor-stack>
+   		</interceptors>
+   		<default-interceptor-ref name="hbiurDefaultStack"></default-interceptor-ref>
+   	</package>
+
+</struts>

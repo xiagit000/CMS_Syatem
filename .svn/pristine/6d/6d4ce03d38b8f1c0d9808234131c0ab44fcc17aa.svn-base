@@ -1,0 +1,110 @@
+/* reset*/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    font-weight: inherit;
+    font-style: inherit;
+    font-size: 100%;
+    font-family: inherit;
+    vertical-align: baseline;
+}
+/* remember to define focus styles! */
+:focus {
+    outline: 0;
+    }
+body {
+    line-height: 1;
+    color: black;
+    background: white;
+	font-size:10px;
+	font-family:Arial, Helvetica, sans-serif;
+    }
+ol, ul {
+    list-style: none;
+    }
+/* tables still need 'cellspacing="0"' in the markup */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    }
+caption, th, td {
+    text-align: left;
+    font-weight: normal;
+    }
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: "";
+    }
+blockquote, q {
+    quotes: "" "";
+    }
+/* CLEAR FIX*/
+.clearfix:after {
+	content: ".";
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
+}
+.clearfix {
+	display: inline-block;
+}
+/* Hides from IE-mac \*/
+* html .clearfix {
+	height: 1%;
+}
+
+/* End hide from IE-mac */
+
+.zhengwen img{
+	width:420px;
+		}
+
+#neirong .art_pic{
+	text-align:center;
+	margin:10px 0;
+}
+.kuai{	
+	margin:0 12px;
+}
+.kuai p{
+	text-align:center;
+	height:36px;
+	color:#333333;
+}
+strong{
+	font-weight:bolder;
+	}
+h1{
+	float:left;
+}
+h1 a{
+	text-indent:-99999px;
+	width:550px;
+	height:120px;
+	display:block;
+}
+h3{
+	font-size:24px;
+	font-weight:600;
+	text-align:center;
+	height:28px;
+	line-height:28px;
+	
+}
+h5{
+	height:30px;
+	line-height:30px;
+	color:#006633;
+	text-align:center;
+	border-bottom:1px #c2c2c2 dashed;	
+}

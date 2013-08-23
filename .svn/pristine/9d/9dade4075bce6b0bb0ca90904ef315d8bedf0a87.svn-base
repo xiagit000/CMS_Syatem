@@ -1,0 +1,386 @@
+package com.boventech.cms.action;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.ResultPath;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+
+import com.boventech.cms.action.util.ApplicationConstants;
+import com.boventech.cms.action.util.URLPatternEngine;
+import com.boventech.cms.module.description.Description;
+import com.boventech.cms.module.index.Block;
+import com.boventech.cms.module.node.Entry;
+import com.boventech.cms.module.node.Menu;
+import com.boventech.cms.module.node.Node;
+import com.boventech.cms.module.open.FriendlyLink;
+import com.boventech.cms.module.open.FriendlyLinkType;
+import com.boventech.cms.service.description.DescriptionService;
+import com.boventech.cms.service.index.IndexService;
+import com.boventech.cms.service.node.EntryService;
+import com.boventech.cms.service.node.NodeService;
+import com.boventech.cms.service.open.FriendlyLinkService;
+import com.boventech.cms.service.open.FriendlyLinkTypeService;
+import com.boventech.sacwh.module.Adword;
+import com.boventech.sacwh.module.DealAmount;
+import com.boventech.sacwh.module.Drift;
+import com.boventech.sacwh.module.Ticket;
+import com.boventech.sacwh.module.Vote;
+import com.boventech.sacwh.service.AdwordService;
+import com.boventech.sacwh.service.DealAmountService;
+import com.boventech.sacwh.service.DriftService;
+import com.boventech.sacwh.service.TicketService;
+import com.boventech.sacwh.service.VoteService;
+
+@Results({ @Result(name = "index", type = "dispatcher", location = "open.jsp") })
+@ResultPath("/templates/${currentTemplate}/")
+public class OpenAction extends AbstractAction {
+
+    /**
+	 * 
+	 */
+    private static final long serialVersionUID = 6611673397945520136L;
+    
+    private TicketService ticketService;
+    
+    private VoteService voteService;
+
+    private NodeService nodeService;
+
+    private FriendlyLinkService friendlyLinkService;
+
+    private FriendlyLinkTypeService friendlyLinkTypeService;
+
+    private Menu menu;
+    
+    private Vote vote;
+    
+    private List<Ticket> tickets;
+
+    private List<Menu> parentMenus = new ArrayList<Menu>();
+
+    private List<Entry> picNews = new ArrayList<Entry>();
+
+    private List<FriendlyLinkType> linkTypes;
+
+    private List<Block> blocks;
+
+    private Map<Long, List<Entry>> entrysMap;
+
+    private IndexService indexService;
+
+    private EntryService entryService;
+
+    private List<Description> descriptionColumns;
+
+    private DescriptionService descriptionService;
+    
+    private List<DealAmount> dealAmounts;
+
+    private DealAmountService dealAmountService;
+    
+    private List<Adword> adwords;
+    
+    private AdwordService adwordService;
+    
+    private Drift drift;
+    
+    private DriftService driftService;
+    
+    public Drift getDrift() {
+        return drift;
+    }
+
+    public void setDrift(Drift drift) {
+        this.drift = drift;
+    }
+
+    public void setDriftService(DriftService driftService) {
+        this.driftService = driftService;
+    }
+
+    public List<Adword> getAdwords() {
+        return adwords;
+    }
+
+    public void setAdwords(List<Adword> adwords) {
+        this.adwords = adwords;
+    }
+
+    public void setAdwordService(AdwordService adwordService) {
+        this.adwordService = adwordService;
+    }
+
+    public void setDealAmountService(DealAmountService dealAmountService) {
+        this.dealAmountService = dealAmountService;
+    }
+
+    public List<DealAmount> getDealAmounts() {
+        return dealAmounts;
+    }
+
+    public void setDealAmounts(List<DealAmount> dealAmounts) {
+        this.dealAmounts = dealAmounts;
+    }
+
+    public void locateParentMenu() {
+        if (this.menu != null) {
+            Menu parent = this.menu.getParent();
+            while (parent != null) {
+                this.parentMenus.add(parent);
+                parent = parent.getParent();
+            }
+            Collections.reverse(this.parentMenus);
+        }
+    }
+
+    public String url(Entry e) {
+        return URLPatternEngine.getEntryUrl(e);
+    }
+
+    public Menu getMenuById(Integer integerId) {
+        Map<Integer, Menu> map = getApplicationValue(ApplicationConstants.ADMIN_MENUS_MAP);
+        if (map != null)
+            return map.get(integerId);
+        return null;
+    }
+
+    public int getCurrentPosition() {
+        if (this.getParentMenus() != null && !this.getParentMenus().isEmpty())
+            return this.getParentMenus().get(0).getPosition();
+        else if (this.menu != null)
+            return this.menu.getPosition();
+        return -1;
+    }
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
+    }
+
+    public String getPlain(String text) {
+        if (text != null && text.length() > 0)
+            return text;
+        return text;
+    }
+
+    public List<Node> getNodes() {
+        return child(null);
+    }
+
+    public List<Node> child(Integer parentId) {
+        return this.nodeService.listNodes(parentId, true);
+    }
+
+    public List<Menu> getMenus() {
+        return this.nodeService.listMenu(true);
+    }
+
+    @Override
+    public HttpHeaders create() {
+        return null;
+    }
+
+    @Override
+    public String destroy() {
+        return null;
+    }
+
+    @Override
+    public String edit() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return null;
+    }
+
+    @Override
+    public HttpHeaders index() {
+        this.picNews = this.getEntryService().listPicEntrys(SMALL_NUMBER);
+        setBlocks(this.indexService.listBlocks());
+        Map<Long, List<Entry>> map = new HashMap<Long, List<Entry>>();
+        for (Block b : blocks) {
+            List<Entry> entries = this.entryService.listPublishedByNode(b.getSize(), b.getNode());
+            map.put(b.getId(), entries);
+        }
+        setEntrysMap(map);
+        setLinks();
+        
+        initDealAmount();
+        initAdword();
+        showVote();
+        this.drift = this.driftService.getOnIndex();
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+    
+    /**
+     * 显示投票
+     */
+    private void showVote() {
+        this.vote = this.voteService.findByCreateTimeDesc();
+        if(vote != null)
+            this.tickets = this.ticketService.listByVoteAndCreateTimeDesc(this.vote.getId(),getPageIndex());
+    }
+
+    /**
+     * initial friend links
+     */
+    protected void setLinks() {
+        this.linkTypes = this.friendlyLinkTypeService.listByPosition(false);
+    }
+
+    private void initDealAmount(){
+        this.dealAmounts = this.dealAmountService.listAll(getPageIndex());
+    }
+    
+    private void initAdword(){
+        this.adwords = this.adwordService.listAll(getPageIndex());
+    }
+    
+    public List<FriendlyLink> fetchLinks(FriendlyLinkType type) {
+        return this.friendlyLinkService.listByTypeAndPosition(type, false);
+    }
+
+    @Override
+    public HttpHeaders show() {
+        return null;
+    }
+
+    @Override
+    public String update() {
+        return null;
+    }
+
+    public String getShort(String text, int number) {
+        if (text != null && text.length() > number)
+            return text.substring(0, number) + "...";
+        return text;
+    }
+
+    public Menu getMenu() {
+        return menu;
+    }
+
+    public void setMenu(Menu menu) {
+        this.menu = menu;
+    }
+
+    public List<Menu> getParentMenus() {
+        return parentMenus;
+    }
+
+    public void setParentMenus(List<Menu> parentMenus) {
+        this.parentMenus = parentMenus;
+    }
+
+    public void setBlocks(List<Block> blocks) {
+        this.blocks = blocks;
+    }
+
+    public List<Block> getBlocks() {
+        return blocks;
+    }
+
+    public void setIndexService(IndexService indexService) {
+        this.indexService = indexService;
+    }
+
+    public IndexService getIndexService() {
+        return indexService;
+    }
+
+    public void setEntryService(EntryService entryService) {
+        this.entryService = entryService;
+    }
+
+    public EntryService getEntryService() {
+        return entryService;
+    }
+
+    public void setEntrysMap(Map<Long, List<Entry>> entrysMap) {
+        this.entrysMap = entrysMap;
+    }
+
+    public Map<Long, List<Entry>> getEntrysMap() {
+        return entrysMap;
+    }
+
+    public List<Entry> getLatestNews() {
+        return this.entryService.listLatestPublishedEntrys(SUPER_LARGE_NUMBER);
+    }
+
+    public List<Entry> getPicNews() {
+        return picNews;
+    }
+
+    public void setFriendlyLinkService(FriendlyLinkService friendlyLinkService) {
+        this.friendlyLinkService = friendlyLinkService;
+    }
+
+    public void setFriendlyLinkTypeService(FriendlyLinkTypeService friendlyLinkTypeService) {
+        this.friendlyLinkTypeService = friendlyLinkTypeService;
+    }
+
+    public List<FriendlyLinkType> getLinkTypes() {
+        return linkTypes;
+    }
+
+    public NodeService getNodeService() {
+        return nodeService;
+    }
+
+    public List<Description> getDescriptionColumns() {
+        if (this.descriptionColumns == null) {
+            this.descriptionColumns = this.descriptionService.list(true);
+        }
+        return this.descriptionColumns;
+    }
+
+    public void setDescriptionService(DescriptionService descriptionService) {
+        this.descriptionService = descriptionService;
+    }
+
+    public DescriptionService getDescriptionService() {
+        return descriptionService;
+    }
+
+    public TicketService getTicketService() {
+        return ticketService;
+    }
+
+    public void setTicketService(TicketService ticketService) {
+        this.ticketService = ticketService;
+    }
+
+    public VoteService getVoteService() {
+        return voteService;
+    }
+
+    public void setVoteService(VoteService voteService) {
+        this.voteService = voteService;
+    }
+
+    public Vote getVote() {
+        return vote;
+    }
+
+    public void setVote(Vote vote) {
+        this.vote = vote;
+    }
+
+    public List<Ticket> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
+    }
+
+}

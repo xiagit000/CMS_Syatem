@@ -1,0 +1,112 @@
+
+/* CSS zhuce */
+html{
+	background:#c5d1f9;
+}
+body{
+	background:url(../images/bg1.gif) repeat-x;
+}
+body, div, dl, dt, dd, ul, ol, li, 
+h1, h2, h3, h4, h5, h6, pre, code, 
+form, fieldset, legend, input, button, 
+textarea, p, blockquote, th, td { 
+    margin: 0; 
+    padding: 0; 
+}
+.head{
+	background:url(../images/zhuce2.jpg) no-repeat left top;
+	top:0px;
+	height:156px;
+	width:990px;
+	margin:0 auto;
+}
+h1{
+	text-indent:-99999px;
+}
+h1 a{
+	display:block;
+	height:156px;
+	width:990px;
+}
+.contant{
+	background:url(../images/zhuce2.jpg) no-repeat left bottom;
+	font-size:14px;
+	bottom:431px;
+	height:431px;
+	width:990px;
+	margin:8px auto 0 auto;
+	
+}
+.title{
+	padding:60px 0 6px 20px;
+	border-bottom:1px #0066CC dotted;
+	width:390px;
+	margin:0 auto;
+}
+.main{
+	margin:20px 0 0 330px ;
+	font-size:14px;
+}
+.w200{
+	width:200px;
+}
+label{
+	display:block;
+	float:left;
+	height:26px;
+	line-height:26px;
+	text-align:right;
+	width:75px;
+}
+.main li{
+	list-style:none;
+	margin-bottom:16px;
+	height:24px;
+}
+.main li input{
+	height:14px;
+	margin:0px 8px;
+	padding:3px 0px 2px 0px;
+}
+input{
+	font-size:14px;
+	vertical-align:middle;
+}
+.vfcode{
+	vertical-align:middle;
+	border:#CCCCCC 1px dotted;
+}
+.button{
+	margin-left:150px;
+}
+.buttona{
+	_padding:3px 0 0 0;
+}
+.footer{
+	border-top:#3055e3 3px solid;
+	background:#c5d1f9;
+	text-align:center;
+	padding:10px;
+	font-size:12px;
+}
+.foot1{
+	color:#3055e3;
+}
+.vhint{
+	color: red;
+}
+fieldset{
+	width: 320px;
+	height: 180px;
+}
+fieldset #todo{
+	text-align: center;
+	padding-top: 60px;
+}
+fieldset ul{
+	padding-top: 20px;
+}
+
+fieldset .button input{
+	height: 25px;
+}

@@ -1,0 +1,32 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev$
+ * $Author$
+ * $LastChangedDate$
+ *
+ */
+
+package com.boventech.sacwh.dao.impl;
+
+import org.springframework.stereotype.Repository;
+
+import com.boventech.cms.dao.impl.AbstractDaoImpl;
+import com.boventech.sacwh.dao.NewsDao;
+import com.boventech.sacwh.module.News;
+
+@Repository
+public class NewsDaoImpl extends AbstractDaoImpl<News, Integer> implements NewsDao {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    
+
+}

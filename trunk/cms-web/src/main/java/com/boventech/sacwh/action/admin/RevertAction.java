@@ -1,0 +1,268 @@
+/*
+ * Copyright 2010. 
+ * 
+ * This document may not be reproduced, distributed or used 
+ * in any manner whatsoever without the expressed written 
+ * permission of Boventech Corp. 
+ * 
+ * $Rev: 150 $
+ * $Author: liang.zhou $
+ * $LastChangedDate: 2012-11-07 16:06:59 +0800 (星期三, 07 十一月 2012) $
+ *
+ */
+
+package com.boventech.sacwh.action.admin;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.rest.DefaultHttpHeaders;
+import org.apache.struts2.rest.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.boventech.cms.action.AdminAction;
+import com.boventech.cms.action.util.FlashMessageConstants;
+import com.boventech.sacwh.module.News;
+import com.boventech.sacwh.module.Revert;
+import com.boventech.sacwh.service.NewsService;
+import com.boventech.sacwh.service.RevertService;
+import com.boventech.util.action.ActionUtil;
+import com.boventech.util.file.FileUtil;
+import com.boventech.util.math.Util;
+import com.boventech.util.user.UserRight;
+import com.boventech.web.annotation.RequireLogin;
+import com.boventech.web.annotation.RequireRight;
+
+@Results({
+    @Result(name = "show", type = "dispatcher", location = "revert/show.jsp"),
+    @Result(name = "new", type = "dispatcher", location = "revert/new.jsp"),
+    @Result(name = "edit", type = "dispatcher", location = "revert/edit.jsp"),
+    @Result(name = "list", type = "redirect", location = "/admin/news/${newsId}/show"),
+    @Result(name = "news", type = "redirect", location = "/admin/news"),
+    @Result(name = "destroy", type = "redirect", location = "/admin/news/${newsId}/reverts")
+})
+@RequireLogin
+@RequireRight(right = UserRight.NORMAL)
+public class RevertAction extends AdminAction {
+    
+    private Logger log = LoggerFactory.getLogger(RevertAction.class);
+
+    private static final long serialVersionUID = 1L;
+    
+    private Revert revert;
+    
+    private List<Revert> reverts;
+    
+    private RevertService revertService;
+
+    private NewsService newsService;
+    
+    private File attachment;
+    
+    private String attachmentFileName;
+    
+    private Integer reserved;
+    
+    @Resource
+    private String basePath;
+    
+    @Resource
+    private String attachmentPath;
+    
+    public void setNewsService(NewsService newsService) {
+        this.newsService = newsService;
+    }
+
+    private Integer newsId;
+    
+    public Integer getNewsId() {
+        return newsId;
+    }
+
+    public void setNewsId(Integer newsId) {
+        this.newsId = newsId;
+    }
+
+    public Revert getRevert() {
+        return revert;
+    }
+
+    public void setRevert(Revert revert) {
+        this.revert = revert;
+    }
+
+    public List<Revert> getReverts() {
+        return reverts;
+    }
+
+    public void setReverts(List<Revert> reverts) {
+        this.reverts = reverts;
+    }
+
+    public void setRevertService(RevertService revertService) {
+        this.revertService = revertService;
+    }
+
+    @Override
+    public HttpHeaders index() {
+        this.reverts = this.revertService.listAll(getPageIndex());
+        return new DefaultHttpHeaders(INDEX).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders show() {
+        this.revert = this.revertService.findById(getIntegerId());
+        return new DefaultHttpHeaders(SHOW).disableCaching();
+    }
+
+    @Override
+    public HttpHeaders create() {
+        News news = this.newsService.findById(this.newsId);
+        this.revert.setNews(news);
+        this.revert.setRevertUser(getCurrentUser());
+        if (this.attachment != null) {
+            uploadFile(revert); //上传文件
+            this.revert.setAttachmentFileName(revert.getAttachmentFileName());
+            this.revert.setFilepath(revert.getFilepath());
+        }
+        this.revertService.save(this.revert);
+        news.getReverts().add(this.revert);
+        this.newsService.update(news);
+        String msg = getText(FlashMessageConstants.ADD_SUCCESS);
+        addFlashMessage(msg);
+        return new DefaultHttpHeaders("news").disableCaching();
+    }
+    
+    /**
+     * 上传文件
+     * @param revert
+     */
+    private void uploadFile(Revert revert) {
+        String fileName = Util.getRandomNumber() + FileUtil.getExt(attachmentFileName);
+        String baseDir = ActionUtil.getContextRealPath() + this.basePath + this.attachmentPath;
+        String filePath = File.separator + getCurrentUser().getId();
+        File destination = FileUtil.newFile(baseDir + filePath, fileName);
+        String path = this.basePath + this.attachmentPath + filePath + File.separator + fileName;
+        try {
+            FileUtils.copyFile(attachment, destination);
+        } catch (IOException e) {
+            log.info(e.getMessage());
+        }
+        revert.setAttachmentFileName(fileName);
+        revert.setFilepath(path);
+    }
+    
+    /**
+     * 删除文件
+     * @param revert
+     */
+    private void deleteFile(Revert revert) {
+        File file = new File(ActionUtil.getContextRealPath() + revert.getFilepath());
+        if(file.exists())
+            file.delete();
+        revert.setAttachmentFileName(null);
+        revert.setFilepath(null);
+        this.revertService.update(revert);
+    }
+
+    @Override
+    public HttpHeaders editNew() {
+        return new DefaultHttpHeaders(NEW).disableCaching();
+    }
+
+    @Override
+    public String update() {
+        Revert revert = this.revertService.findById(getIntegerId());
+        revert.setTitle(this.revert.getTitle());
+        revert.setContent(this.revert.getContent());
+        if(this.reserved == null && revert.getAttachmentFileName() != null){
+            deleteFile(revert); //删除文件
+        }
+        if (this.attachment != null) {
+            if(revert.getAttachmentFileName() != null){
+                deleteFile(revert); //删除文件
+            }
+            uploadFile(revert); //上传文件
+        }
+        this.revertService.update(revert);
+        String msg = getText(FlashMessageConstants.UPDATE_SUCCESS);
+        addFlashMessage(msg);
+        return LIST;
+    }
+
+    @Override
+    public String edit() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String destroy() {
+        Revert revert = this.revertService.findById(getIntegerId());
+        this.newsId = revert.getNews().getId();
+        File file = new File(ActionUtil.getContextRealPath() + revert.getFilepath());
+        //判断文件是否存在，存在则删除文件
+        if(file.exists())
+            file.delete();
+        this.revertService.delete(revert);
+        String msg = getText(FlashMessageConstants.DELETE_SUCCESS);
+        addFlashMessage(msg);
+        return DESTROY;
+    }
+
+    public File getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(File attachment) {
+        this.attachment = attachment;
+    }
+
+    public String getAttachmentFileName() {
+        return attachmentFileName;
+    }
+
+    public void setAttachmentFileName(String attachmentFileName) {
+        this.attachmentFileName = attachmentFileName;
+    }
+
+    public Integer getReserved() {
+        return reserved;
+    }
+
+    public void setReserved(Integer reserved) {
+        this.reserved = reserved;
+    }
+
+    public String getBasePath() {
+        return basePath;
+    }
+
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
+    }
+
+    public String getAttachmentPath() {
+        return attachmentPath;
+    }
+
+    public void setAttachmentPath(String attachmentPath) {
+        this.attachmentPath = attachmentPath;
+    }
+
+    public RevertService getRevertService() {
+        return revertService;
+    }
+
+    public NewsService getNewsService() {
+        return newsService;
+    }
+
+}

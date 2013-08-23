@@ -1,0 +1,365 @@
+package com.boventech.cms.module.node;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+
+import org.apache.commons.lang.time.DateUtils;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.boventech.cms.module.Image;
+import com.boventech.cms.module.download.AccessStrategyTag;
+import com.boventech.cms.module.download.AttachAccessStrategy;
+import com.boventech.cms.module.download.Attachment;
+import com.boventech.cms.module.right.AuthrizableEntity;
+import com.boventech.cms.module.right.AuthrizationAware;
+import com.boventech.cms.module.right.Operation;
+import com.boventech.cms.module.right.Privilege;
+import com.boventech.cms.module.user.User;
+
+
+/**
+ * class represents a type of Entry
+ * 
+ * @author applerao
+ * @param <E>
+ * 
+ */
+@Entity
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Entry implements Serializable, AuthrizationAware {
+
+    /**
+	 * 
+	 */
+    private static final long serialVersionUID = 3086118861274905111L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
+
+    private String title;
+
+    @Lob
+    private String content;
+
+    @Lob
+    private String plainText;
+
+    private Date timeline;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Node belonged;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    private User author;
+
+    private boolean link;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Image image;
+
+    private int hits;
+
+    private boolean published;
+
+    private Date publishedDate;
+
+    private Date userPublishedDate;
+
+    @Lob
+    private String summary;
+
+    @Column(name = "ENTRY_DESCRIPTION")
+    private String description;
+
+    @Column(name = "ENTRY_KEYWORD")
+    private String keyword;
+
+    /**
+     * if the page show is simple
+     */
+    private boolean simple;
+
+    private int expiredDay;
+
+    private int position;
+
+    /**
+     * 新闻访问权限
+     */
+    private int accessRight;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "entry", orphanRemoval = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<Attachment> attachments = new ArrayList<Attachment>();
+
+    public void addAttachments(List<Attachment> attachments) {
+        for (Attachment att : attachments) {
+            AttachAccessStrategy strategy = getAttachmentStrategy();
+            att.setAccessStrategy(strategy != null ? strategy.copy() : null);
+            att.setEntry(this);
+            this.attachments.add(att);
+        }
+    }
+
+    public AttachAccessStrategy getAttachmentStrategy() {
+        if (this.attachments != null && this.attachments.size() > 0)
+            return this.attachments.get(0).getAccessStrategy();
+        return null;
+    }
+
+    public void removeAttachments(List<Attachment> attachments) {
+        this.attachments.removeAll(attachments);
+    }
+
+    public void clearAttachments() {
+        this.attachments.clear();
+    }
+
+    /**
+     * if the news if hot
+     * 
+     * @return
+     */
+    public boolean isHot() {
+        Date current = new Date();
+        Date expiredDate = DateUtils.addDays(this.publishedDate, this.expiredDay);
+        return expiredDate.compareTo(current) > 0;
+    }
+
+    public Date getPublishedTime() {
+        if (this.userPublishedDate != null)
+            return this.userPublishedDate;
+        else if (this.publishedDate != null)
+            return this.publishedDate;
+        else
+            return new Date();
+    }
+
+    public boolean isAuthrized(AuthrizableEntity entity, Operation operation) {
+        Node currentNode = this.belonged;
+        while (currentNode != null) {
+            boolean authrized = entity.hasPrivilege(new Privilege(currentNode, operation));
+            if (authrized)
+                return true;
+            else
+                currentNode = currentNode.getParent();
+        }
+        return false;
+    }
+
+    public void setPlainText(String plainText) {
+        this.plainText = plainText;
+    }
+
+    public String getPlainText() {
+        return plainText;
+    }
+
+    @ManyToOne
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Date getTimeline() {
+        return timeline;
+    }
+
+    public void setTimeline(Date timeline) {
+        this.timeline = timeline;
+    }
+
+    public Node getBelonged() {
+        return belonged;
+    }
+
+    public void setBelonged(Node belonged) {
+        this.belonged = belonged;
+    }
+
+    public void setLink(boolean link) {
+        this.link = link;
+    }
+
+    public boolean isLink() {
+        return link;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
+    public Image getImage() {
+        return image;
+    }
+
+    public void setHits(int hits) {
+        this.hits = hits;
+    }
+
+    public int getHits() {
+        return hits;
+    }
+
+    public boolean isPublished() {
+        return published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
+    }
+
+    public Date getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(Date publishedDate) {
+        this.publishedDate = publishedDate;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public boolean isSimple() {
+        return simple;
+    }
+
+    public void setSimple(boolean simple) {
+        this.simple = simple;
+    }
+
+    public int getExpiredDay() {
+        return expiredDay;
+    }
+
+    public void setExpiredDay(int expiredDay) {
+        this.expiredDay = expiredDay;
+    }
+
+    public Date getUserPublishedDate() {
+        return userPublishedDate;
+    }
+
+    public void setUserPublishedDate(Date userPublishedDate) {
+        this.userPublishedDate = userPublishedDate;
+    }
+
+    public List<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<Attachment> attachments) {
+        this.attachments = attachments;
+    }
+
+    public boolean hasAttachments() {
+        return this.attachments.size() > 0;
+    }
+
+    public boolean isAttachEmpty() {
+        return this.attachments.size() == 0;
+    }
+
+    public AccessStrategyTag getAttachmentTag() {
+        if (this.attachments.size() > 0) {
+            AttachAccessStrategy strategy = this.attachments.get(0).getAccessStrategy();
+            if (strategy != null)
+                return strategy.getTag();
+        }
+        return null;
+    }
+
+    public void changeAttachStrategy(AttachAccessStrategy strategy) {
+        for (Attachment attachment : this.attachments) {
+            attachment.setAccessStrategy(strategy.copy());
+        }
+    }
+
+    public void addAttachStrategy(AttachAccessStrategy strategy) {
+        for (Attachment attachment : this.attachments) {
+            if (attachment.getAccessStrategy() == null)
+                attachment.setAccessStrategy(strategy.copy());
+        }
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    public int getAccessRight() {
+        return accessRight;
+    }
+
+    public void setAccessRight(int accessRight) {
+        this.accessRight = accessRight;
+    }
+    
+}
